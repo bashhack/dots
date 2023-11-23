@@ -1,0 +1,280 @@
+#!/usr/bin/env zsh
+
+# Read buf -> clipboard
+cb() {
+    cat $1 | pbcopy
+}
+
+# QuickTimePlayer - Screen recording
+create_screen_rec() {
+    osascript -e 'tell application "QuickTime Player" to activate' -e 'tell application "QuickTime Player" to start (new screen recording)'
+}
+
+# QuickTimePlayer - Webcam recording
+create_cam_rec() {
+    osascript -e 'tell application "QuickTime Player" to activate' -e 'tell application "QuickTime Player" to start (new movie recording)'
+}
+
+extract() {
+    for file in "$@"
+    do
+        if [ -f $file ]; then
+            _ex $file
+        else
+            echo "'$file' is not a valid file"
+        fi
+    done
+}
+
+# Extract files in their own directories
+mkextract() {
+    for file in "$@"
+    do
+        if [ -f $file ]; then
+            local filename=${file%\.*}
+            mkdir -p $filename
+            cp $file $filename
+            cd $filename
+            _ex $file
+            rm -f $file
+            cd -
+        else
+            echo "'$1' is not a valid file"
+        fi
+    done
+}
+
+# Internal function to extract any file
+_ex() {
+    case $1 in
+        *.tar.bz2)  tar xjf $1      ;;
+        *.tar.gz)   tar xzf $1      ;;
+        *.bz2)      bunzip2 $1      ;;
+        *.gz)       gunzip $1       ;;
+        *.tar)      tar xf $1       ;;
+        *.tbz2)     tar xjf $1      ;;
+        *.tgz)      tar xzf $1      ;;
+        *.zip)      unzip $1        ;;
+        *.7z)       7z x $1         ;; # require p7zip
+        *.rar)      7z x $1         ;; # require p7zip
+        *.iso)      7z x $1         ;; # require p7zip
+        *.Z)        uncompress $1   ;;
+        *)          echo "'$1' cannot be extracted" ;;
+    esac
+}
+
+# Compress a file
+compress() {
+    local DATE="$(date +%Y%m%d-%H%M%S)"
+    tar cvzf "$DATE.tar.gz" "$@"
+}
+
+# Create a ZIP archive of a file or folder excluding dot files
+zipf () {
+    if [[ $# -eq 0 ]]; then echo "No files to ZIP."; return; fi
+    if [[ $# -eq 1 ]]; then
+            zipname=$(echo $1 | perl -pi -E "s/(\ |\/)+/-/g" | perl -pi -E "s/-$//g");
+            if [[ -f "$zipname"".zip" ]]; then
+                ask "Filename \\033[1;31m$zipname.zip already exists\\0033[0;39m, add elements to it ?" N
+                [ "$rep" != "y" ] && zipname="$zipname""_"$(date +"%s")
+            fi
+    else
+            zipname="Untitled_$(date +"%d_%h_%Hh%M")"
+    fi
+
+    echo -e "Compressing files to archive \\033[1;32m$zipname.zip\\0033[0;39m (skip hidden dot files)."
+    zip -r "$zipname".zip "$@" -x "*/\.*" ;
+}
+
+CAPTURE_FOLDER="${HOME}/Pictures/Captures"
+
+cap() {
+    # Capture the screen to the desktop
+    local name=$1
+    if [ ! -z $name ]; then
+        screencapture "${CAPTURE_FOLDER}/capture-$name-$(date +%Y%m%d_%H%M%S).png"
+    else
+        screencapture "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
+    fi
+}
+
+capi() {
+    # Capture the selected screen area to the desktop
+    local name=$1
+    if [ ! -z $name ]; then
+        screencapture -i "${CAPTURE_FOLDER}/capture-$name-$(date +%Y%m%d_%H%M%S).png"
+    else
+        screencapture -i "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
+    fi
+}
+
+capiw() {
+    # Capture the selected window to the desktop
+    local name=$1
+    if [ ! -z $name ]; then
+        screencapture -i -w "${CAPTURE_FOLDER}/capture-$name-$(date +%Y%m%d_%H%M%S).png"
+    else
+        screencapture -i -w "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
+    fi
+}
+
+# Resize an image
+imgresize() {
+    local filename=${1%\.*}
+    local extension="${1##*.}"
+    local separator="_"
+    if [ ! -z $3 ]; then
+        local finalName="$filename.$extension"
+    else
+        local finalName="$filename$separator$2.$extension"
+    fi
+    convert $1 -quality 100 -resize $2 $finalName
+    echo "$finalName resized to $2"
+}
+
+Imgresize() {
+    imgresize $1 $2 true
+}
+
+imgresizeall() {
+    for f in *.${1}; do
+        if [ ! -z $3 ]; then
+            imgresize "$f" ${2} t
+        else
+            imgresize "$f" ${2}
+        fi
+    done
+}
+
+imgoptimize() {
+    local filename=${1%\.*}
+    local extension="${1##*.}"
+    local separator="_"
+    local suffix="optimized"
+    local finalName="$filename$separator$suffix.$extension"
+    convert $1 -strip -interlace Plane -quality 85% $finalName
+    echo "$finalName created"
+}
+
+Imgoptimize() {
+    local filename=${1%\.*}
+    local extension="${1##*.}"
+    local separator="_"
+    local suffix="optimized"
+    local convert $1 -strip -interlace Plane -quality 85% $1
+    echo "$1 created"
+}
+
+imgoptimizeall() {
+    for f in *.${1}; do
+        imgoptimize "$f"
+    done
+}
+
+Imgoptimizeall() {
+    for f in *.${1}; do
+        Imgoptimize "$f"
+    done
+}
+
+imgtojpg() {
+    for file in "$@"
+    do
+        local filename=${file%\.*}
+        convert -quality 100 $file "${filename}.jpg"
+    done
+}
+
+imgtopng() {
+    for file in "$@"
+    do
+        local filename=${file%\.*}
+        convert -quality 100 $file "${filename}.png"
+    done
+}
+
+imgtowebp() {
+    for file in "$@"
+    do
+        local filename=${file%\.*}
+        cwebp -q 100 $file -o $(basename ${filename}).webp
+    done
+}
+
+mkcd() {
+    local dir="$*";
+    mkdir -p "$dir" && cd "$dir";
+}
+
+mkcp() {
+    local dir="$2"
+    local tmp="$2"; tmp="${tmp: -1}"
+    [ "$tmp" != "/" ] && dir="$(dirname "$2")"
+    [ -d "$dir" ] ||
+        mkdir -p "$dir" &&
+        cp -r "$@"
+}
+
+mkmv() {
+    local dir="$2"
+    local tmp="$2"; tmp="${tmp: -1}"
+    [ "$tmp" != "/" ] && dir="$(dirname "$2")"
+    [ -d "$dir" ] ||
+        mkdir -p "$dir" &&
+        mv "$@"
+    }
+
+historystat() {
+    history 0 | awk '{print $2}' | sort | uniq -c | sort -n -r | head
+}
+
+promptspeed() {
+    for i in $(seq 1 10); do /usr/bin/time zsh -i -c exit; done
+}
+
+zshcomp() {
+    for command completion in ${(kv)_comps:#-*(-|-,*)}
+    do
+        printf "%-32s %s\n" $command $completion
+    done | sort
+}
+
+back() {
+    for file in "$@"; do
+        cp "$file" "$file".bak
+    done
+}
+
+# Generate a password - default 24 bytes
+pass() {
+    local size=${1:-16}
+    openssl rand -base64 $size
+}
+
+servepy() {
+    # file share on local network
+    python3 -m http.server $1;
+}
+
+weather() {
+    # weather by city or zip
+    curl "wttr.in/"$1"?u";
+}
+
+# http_headers (uses httpie)
+http_headers() {
+    http $@ -h;
+}
+https_headers() {
+    https $@ -h;
+}
+
+lip() { 
+  # get local ip
+  ipconfig getifaddr en0 
+}
+
+history_top() { 
+  # Show top 10 used commands
+  history | awk '{a[$2]++}END{for(i in a){print a[i] " " i}}' | sort -rn | head; 
+}

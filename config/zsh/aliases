@@ -1,0 +1,198 @@
+#!/usr/bin/env zsh
+
+# +--------+
+# | System |
+# +--------+
+
+alias restart='sudo shutdown -r now'
+alias shutdown='sudo shutdown -h now'
+alias sleep='sudo shutdown -s now'
+alias c='clear'
+alias h='history'
+alias r='source $ZDOTDIR/.zshrc'
+
+# +-----+
+# | Zsh |
+# +-----+
+
+alias d='dirs -v'
+for index ({1..9}) alias "$index"="cd +${index} > /dev/null"; unset index # directory stack
+
+# +------------+
+# | Navigation |
+# +------------+
+
+alias .="cd && ll"
+alias ..="cd .. && ll"
+alias ...="cd ../.. && ll"
+
+# +----+
+# | ls |
+# +----+
+
+alias ls='eza --color=auto'
+alias l='ls -l'
+alias ll='ls -lahF'
+
+# +-----+
+# | top |
+# +-----+
+
+alias top='htop'
+
+# +-----+
+# | cat |
+# +-----+
+
+alias cat='bat'
+
+# +------+
+# | wget |
+# +------+
+alias wget='wget --hsts-file="$HOME/.wget-hsts" -c'
+
+# +----+
+# | cp |
+# +----+
+
+alias cp='cp -iv'
+alias mv='mv -iv'
+alias rm='rm -iv'
+alias mkdir='mkdir -pv'
+
+# +------+
+# | grep |
+# +------+
+
+alias grep='grep -P -i --color=auto'
+
+# +------+
+# | ping |
+# +------+
+
+alias pg='ping 8.8.8.8'
+
+# +------+
+# | brew |
+# +------+
+
+alias brwi='brew install'
+alias brwci='brew install --cask'
+alias brwd='brew doctor'
+alias brwu='brew update && brew upgrade && brew cleanup'
+alias brwr='brew autoremove'
+alias brwf='cat Brewfile.* | brew bundle --file=-'
+
+# +--------+
+# | Golang |
+# +--------+
+
+alias gob="go build"
+alias gor="go run"
+alias goc="go clean -i"
+alias gta="go test ./..."       # go test all
+alias gia="go install ./..."    # go install all
+alias gmt="go mod tidy"
+
+# +------+
+# | Hugo |
+# +------+
+
+alias hugostart="hugo server -DEF --ignoreCache"
+
+
+# +-------+
+# | Emacs |
+# +-------+
+
+alias -s org=emacs
+alias em="emacsclient -c -a ''"
+alias emt="emacsclient -t -a ''"
+alias vim='em'
+alias vi='em'
+alias killem="emacsclient -e '(save-buffers-kill-emacs)'"
+
+
+# +-----+
+# | Git |
+# +-----+
+
+alias magit='emacsclient -a emacs -e "(magit-status \"$(git rev-parse --show-toplevel)\")"'
+alias gs='git status'
+alias gss='git status -s'
+alias ga='git add'
+alias gp='git push'
+alias gpraise='git blame'
+alias gpo='git push origin'
+alias gpof='git push origin --force-with-lease'
+alias gpofn='git push origin --force-with-lease --no-verify'
+alias gpt='git push --tag'
+alias gtd='git tag --delete'
+alias gtdr='git tag --delete origin'
+alias grb='git branch -r'                                                                           # display remote branch
+alias gplo='git pull origin'
+alias gb='git branch '
+alias gc='git commit'
+alias gd='git diff'
+alias gco='git checkout '
+alias gl='git log --pretty=oneline'
+alias gr='git remote'
+alias grs='git remote show'
+alias glol='git log --graph --abbrev-commit --oneline --decorate'
+alias gclean="git branch --merged | grep  -v '\\*\\|master\\|develop' | xargs -n 1 git branch -d" # Delete local branch merged with master
+alias gblog="git for-each-ref --sort=committerdate refs/heads/ --format='%(HEAD) %(color:red)%(refname:short)%(color:reset) - %(color:yellow)%(objectname:short)%(color:reset) - %(contents:subject) - %(authorname) (%(color:blue)%(committerdate:relative)%(color:reset))'"                                                             # git log for each branches
+alias gsub="git submodule update --remote"                                                        # pull submodules
+alias dif="git diff --no-index"                                                                   # Diff two files even if not in git repo! Can add -w (don't diff whitespaces)
+
+# +------+
+# | tmux |
+# +------+
+
+alias tmuxk='tmux kill-session -t'
+alias tmuxa='tmux attach -t'
+alias tmuxl='tmux list-sessions'
+
+# +-------+
+# | tmuxp |
+# +-------+
+
+alias mux='tmuxp load'
+
+# +--------+
+# | docker |
+# +--------+
+alias dockls="docker container ls | awk 'NR > 1 {print \$NF}'"                  # display names of running containers
+alias dockRr='docker rm $(docker ps -a -q) && docker rmi $(docker images -q)'   # delete every containers / images
+alias dockstats='docker stats $(docker ps -q)'                                  # stats on images
+alias dockimg='docker images'                                                   # list images installed
+alias dockprune='docker system prune -a --volumes'                              # prune everything
+alias dockceu='docker-compose run --rm -u $(id -u):$(id -g)'                    # run as the host user
+alias dockce='docker-compose run --rm'
+
+# +----------------+
+# | docker-compose |
+# +----------------+
+
+alias dockup='docker compose up -d'
+alias dockdown='docker compose down'
+alias dockstop='docker compose stop'
+
+# +----------+
+# | Personal |
+# +----------+
+
+# Folders
+alias work="$HOME/Development/Work"
+alias personal="$HOME/Development/Personal"
+alias doc="$HOME/Documents"
+alias dow="$HOME/Downloads"
+
+# Golang
+alias gosrc="$GOPATH/src/"
+alias gobin="$GOPATH/bin/"
+
+# +--------+
+# | Custom |
+# +--------+
+
+alias osx_netstat="sudo lsof -i -P"    # netstat on OSX

@@ -99,3 +99,112 @@
               ("TAB" . 'copilot-accept-completion)
               ("C-TAB" . 'copilot-accept-completion-by-word)
               ("C-<tab>" . 'copilot-accept-completion-by-word)))
+
+(setq auth-sources '("~/.authinfo.gpg"))
+
+
+;; ** Keybindings To Open Dired
+
+;; | COMMAND    | DESCRIPTION                        | KEYBINDING |
+;; |------------+------------------------------------+------------|
+;; | dired      | /Open dired file manager/            | SPC d d    |
+;; | dired-jump | /Jump to current directory in dired/ | SPC d j    |
+
+;; ** Keybindings Within Dired
+;; *** Basic dired commands
+
+;; | COMMAND                | DESCRIPTION                                 | KEYBINDING |
+;; |------------------------+---------------------------------------------+------------|
+;; | dired-view-file        | /View file in dired/                          | SPC d v    |
+;; | dired-up-directory     | /Go up in directory tree/                     | h          |
+;; | dired-find-file        | /Go down in directory tree (or open if file)/ | l          |
+;; | dired-next-line        | /Move down to next line/                      | j          |
+;; | dired-previous-line    | /Move up to previous line/                    | k          |
+;; | dired-mark             | /Mark file at point/                          | m          |
+;; | dired-unmark           | /Unmark file at point/                        | u          |
+;; | dired-do-copy          | /Copy current file or marked files/           | C          |
+;; | dired-do-rename        | /Rename current file or marked files/         | R          |
+;; | dired-hide-details     | /Toggle detailed listings on/off/             | (          |
+;;                                                                                       | dired-git-info-mode    | /Toggle git information on/off/               | )          |
+;; | dired-create-directory | /Create new empty directory/                  | +          |
+;; | dired-diff             | /Compare file at point with another/          | =          |
+;; | dired-subtree-toggle   | /Toggle viewing subtree at point/             | TAB        |
+
+;; *** Dired commands using regex
+
+;; | COMMAND                 | DESCRIPTION                | KEYBINDING |
+;; |-------------------------+----------------------------+------------|
+;; | dired-mark-files-regexp | /Mark files using regex/     | % m        |
+;; | dired-do-copy-regexp    | /Copy files using regex/     | % C        |
+;; | dired-do-rename-regexp  | /Rename files using regex/   | % R        |
+;; | dired-mark-files-regexp | /Mark all files using regex/ | * %        |
+
+;; *** File permissions and ownership
+
+;; | COMMAND         | DESCRIPTION                      | KEYBINDING |
+;; |-----------------+----------------------------------+------------|
+;; | dired-do-chgrp  | /Change the group of marked files/ | g G        |
+;; | dired-do-chmod  | /Change the mode of marked files/  | M          |
+;; | dired-do-chown  | /Change the owner of marked files/ | O          |
+;; | dired-do-rename | /Rename file or all marked files/  | R          |
+(map! :leader
+      (:prefix ("d" . "dired")
+       :desc "Open dired" "d" #'dired
+       :desc "Dired jump to current" "j" #'dired-jump)
+      (:after dired
+              (:map dired-mode-map
+               :desc "Peep-dired image previews" "d p" #'peep-dired
+               :desc "Dired view file"           "d v" #'dired-view-file)))
+
+(evil-define-key 'normal dired-mode-map
+  (kbd "M-RET") 'dired-display-file
+  (kbd "h") 'dired-up-directory
+  (kbd "l") 'dired-find-file
+  (kbd "m") 'dired-mark
+  (kbd "t") 'dired-toggle-marks
+  (kbd "u") 'dired-unmark
+  (kbd "C") 'dired-do-copy
+  (kbd "D") 'dired-do-delete
+  (kbd "J") 'dired-goto-file
+  (kbd "M") 'dired-do-chmod
+  (kbd "O") 'dired-do-chown
+  (kbd "P") 'dired-do-print
+  (kbd "R") 'dired-do-rename
+  (kbd "T") 'dired-do-touch
+  (kbd "Y") 'dired-copy-filenamecopy-filename-as-kill ; copies filename to kill ring.
+  (kbd "Z") 'dired-do-compress
+  (kbd "+") 'dired-create-directory
+  (kbd "-") 'dired-do-kill-lines
+  (kbd "% l") 'dired-downcase
+  (kbd "% m") 'dired-mark-files-regexp
+  (kbd "% u") 'dired-upcase
+  (kbd "* %") 'dired-mark-files-regexp
+  (kbd "* .") 'dired-mark-extension
+  (kbd "* /") 'dired-mark-directories
+  (kbd "; d") 'epa-dired-do-decrypt
+  (kbd "; e") 'epa-dired-do-encrypt)
+;; Get file icons in dired
+;; With dired-open plugin, you can launch external programs for certain extensions
+;; For example, I set all .png files to open in 'sxiv' and all .mp4 files to open in 'mpv'
+(setq dired-open-extensions '(("gif" . "sxiv")
+                              ("jpg" . "sxiv")
+                              ("png" . "sxiv")
+                              ("mkv" . "mpv")
+                              ("mp4" . "mpv")))
+
+;; ** Keybindings Within Dired With Peep-Dired-Mode Enabled
+;; If peep-dired is enabled, you will get image previews as you go up/down with 'j' and 'k'
+
+;; | COMMAND              | DESCRIPTION                              | KEYBINDING |
+;; |----------------------+------------------------------------------+------------|
+;; | peep-dired           | /Toggle previews within dired/             | SPC d p    |
+;; | peep-dired-next-file | /Move to next file in peep-dired-mode/     | j          |
+;; | peep-dired-prev-file | /Move to previous file in peep-dired-mode/ | k          |
+(evil-define-key 'normal peep-dired-mode-map
+  (kbd "j") 'peep-dired-next-file
+  (kbd "k") 'peep-dired-prev-file)
+(add-hook 'peep-dired-hook 'evil-normalize-keymaps)
+
+;; Making deleted files go to trash can
+(setq delete-by-moving-to-trash t
+      trash-directory "~/.Trash/")

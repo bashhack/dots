@@ -13,11 +13,9 @@ brew "sqlite"
 # Standard tools
 brew "coreutils"
 brew "cmake"
-brew "gcc"
 brew "gnupg"
 brew "grep"
 brew "imagemagick"
-brew "libgccjit"
 brew "openssl@3"
 brew "pandoc"
 brew "pngpaste"
@@ -29,10 +27,10 @@ brew "zlib"
 
 # Useful commands
 brew "bat"
-brew "bottom"
 brew "eza"
 brew "fd"
 brew "fzf"
+brew "htop"
 brew "ripgrep"
 
 # Git-related
@@ -76,20 +74,15 @@ brew "fnm"
 brew "pyenv"
 
 # Browsers
-brew "lynx"
 cask "firefox"
 
 # Editors
 brew "d12frosted/emacs-plus/emacs-plus@29", args: ["with-imagemagick", "with-modern-doom3-icon", "with-native-comp", "with-xwidgets"]
-brew "neovim"
-cask "neovide"
 
 # GO-related
 brew "delve"
 
 # Other tools
-brew "cmatrix"
-brew "fastfetch"
 brew "graphviz"
 brew "hugo"
 brew "shellcheck"
