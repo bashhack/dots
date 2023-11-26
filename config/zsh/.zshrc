@@ -3,6 +3,14 @@
 # Brew will through warning without this present :/
 export PATH="/opt/homebrew/bin:$PATH"
 
+# Pyenv can't bother being compliant so now we have to do this nonsense, too :/
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+
+# FNM
+eval "$(fnm env --use-on-cd)"
+
 fpath=($ZDOTDIR/plugins $fpath)
 
 # +------------+

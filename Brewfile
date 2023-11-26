@@ -46,6 +46,7 @@ brew "curl"
 brew "grpcurl"
 brew "httpie"
 brew "wget"
+brew "hey"
 
 # JSON-related
 brew "jq"
@@ -75,6 +76,7 @@ brew "pyenv"
 
 # Browsers
 cask "firefox"
+cask "orion"
 
 # Editors
 brew "d12frosted/emacs-plus/emacs-plus@29", args: ["with-imagemagick", "with-modern-doom3-icon", "with-native-comp", "with-xwidgets"]

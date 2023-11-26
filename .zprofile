@@ -22,11 +22,8 @@ export GOPATH=$(go env GOPATH)
 
 # Python
 export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
-
-# FNM
-eval "$(fnm env --use-on-cd)"
 
 # PATH
 export PATH="/opt/homebrew/bin:$PATH"
@@ -43,3 +40,6 @@ if [ -d "$(brew --prefix)/opt/grep/libexec/gnubin" ]; then
 fi
 
 export PATH="$PATH:$HOME/Library/Application Support/JetBrains/Toolbox/scripts"  # JetBrains Toolbox App
+
+# OrbStack: command-line tools and integration
+source ~/.orbstack/shell/init.zsh 2>/dev/null || :

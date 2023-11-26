@@ -33,6 +33,7 @@ alias ...="cd ../.. && ll"
 alias ls='eza --color=auto'
 alias l='ls -l'
 alias ll='ls -lahF'
+alias lt='ls -lahFT'
 
 # +-----+
 # | top |
