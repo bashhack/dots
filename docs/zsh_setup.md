@@ -28,8 +28,8 @@ Good to remember: .zshenv → .zprofile → .zshrc → .zlogin → .zlogout
 4. Add submodules for `zsh-completions` + `zsh-syntax-highlighting`
    ```shell
    cd <path_to_dots_repo>
-   git add submodule git@github.com:zsh-users/zsh-completions.git plugins/zsh-completions
-   git add submodule git@github.com:zsh-users/zsh-syntax-highlighting.git plugins/zsh-syntax-highlighting
+   git submodule add git@github.com:zsh-users/zsh-completions.git plugins/zsh-completions
+   git submodule add git@github.com:zsh-users/zsh-syntax-highlighting.git plugins/zsh-syntax-highlighting
    ```
 
 5. Source the shell, confirming that (1) syntax highlighting (e.g., common commands should vary in color), (2) aliases (e.g., see `.config/zsh/aliases`) and (3) auto-completions (e.g., <TAB> + letter should generate auto-completion matches) are working
