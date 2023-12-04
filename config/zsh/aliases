@@ -197,3 +197,5 @@ alias gobin="$GOPATH/bin/"
 # +--------+
 
 alias osx_netstat="sudo lsof -i -P"    # netstat on OSX
+
+alias frs="PL_KANGA=http://localhost:8040 PL_WORKPLACE=http://localhost:8000 PL_LOGIN=http://localhost:9000 PL_PLATFORM=http://localhost:8020 PL_USERNAME=dev PL_PASSWORD=dev123 ./foundry.py run"
