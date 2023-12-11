@@ -15,6 +15,16 @@ create_cam_rec() {
     osascript -e 'tell application "QuickTime Player" to activate' -e 'tell application "QuickTime Player" to start (new movie recording)'
 }
 
+# Create an mp4 with ffmpeg
+create_mp4() {
+    if [[ $2 ]];
+        then output=$2
+        else output=${1%.*}.mp4
+    fi
+
+    ffmpeg -i $1 $output
+}
+
 extract() {
     for file in "$@"
     do
