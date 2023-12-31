@@ -93,7 +93,10 @@
 (set-frame-parameter (selected-frame) 'alpha '(90 . 90)) (add-to-list 'default-frame-alist '(alpha . (90 . 90)))
 
 (use-package! copilot
-  :hook (prog-mode . copilot-mode)
+  :hook
+  (prog-mode . copilot-mode)
+  (copilot-mode . (lambda ()
+                    (setq-local copilot--indent-warning-printed-p t)))
   :bind (:map copilot-completion-map
               ("<tab>" . 'copilot-accept-completion)
               ("TAB" . 'copilot-accept-completion)
@@ -208,3 +211,21 @@
 ;; Making deleted files go to trash can
 (setq delete-by-moving-to-trash t
       trash-directory "~/.Trash/")
+
+;; Common Lisp - Quicklisp
+(load (expand-file-name "~/.quicklisp/slime-helper.el"))
+(setq inferior-lisp-program "sbcl")
+
+;; C/C++
+;; (after! lsp-clangd
+;;   (setq lsp-clients-clangd-args
+;;         '("-j=3"
+;;           "--background-index"
+;;           "--clang-tidy"
+;;           "--completion-style=detailed"
+;;           "--header-insertion=never"
+;;           "--header-insertion-decorators=0"))
+;;   (set-lsp-priority! 'clangd 2))
+(after! ccls
+  (setq ccls-initialization-options '(:index (:comments 2) :completion (:detailedLabel t)))
+  (set-lsp-priority! 'ccls 2)) ; optional as ccls is the default in Doom

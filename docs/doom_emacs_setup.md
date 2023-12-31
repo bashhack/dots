@@ -51,6 +51,52 @@ xcode-select --install
     fi 
     ```
 
+- common-lisp:
+  * Install SBCL (already included in `Brewfile`)
+    ```shell
+    brew install sbcl
+    ```
+  * Install [Quicklisp](https://www.quicklisp.org/beta/)
+    ```shell
+    $ curl -o /tmp/ql.lisp http://beta.quicklisp.org/quicklisp.lisp
+    $ sbcl --no-sysinit --no-userinit --load /tmp/ql.lisp \
+        --eval '(quicklisp-quickstart:install :path "~/.quicklisp")' \
+        --eval '(ql:add-to-init-file)' \
+        --quit
+    ```
+  * Optional: Install SLIME - currently NOT using in favor of Sly
+    ```shell
+    $ sbcl --eval '(ql:quickload :quicklisp-slime-helper)' --quit
+    ```
+
+    Then edit `~/.config/doom/config.el`
+    ```lisp
+    (load (expand-file-name "~/.quicklisp/slime-helper.el"))
+    (setq inferior-lisp-program "sbcl")
+    ```
+
+- cc:
+  * Confirm presence of `clang --version` + `clangd` v9+ + `gcc` + `cmake`
+  * Install `llvm` + `ccls` (already present in `Brewfile`)
+  * Optional: If using `clangd` as primary over `ccls`
+    ```lisp
+    (after! lsp-clangd
+    (setq lsp-clients-clangd-args
+            '("-j=3"
+            "--background-index"
+            "--clang-tidy"
+            "--completion-style=detailed"
+            "--header-insertion=never"
+            "--header-insertion-decorators=0"))
+    (set-lsp-priority! 'clangd 2))
+    ```
+  * Optional: If using `ccls` as primary over `clangd`:
+    ```lisp
+    (after! ccls
+        (setq ccls-initialization-options '(:index (:comments 2) :completion (:detailedLabel t)))
+        (set-lsp-priority! 'ccls 2)) ; optional as ccls is the default in Doom
+    ```
+
 - docker:
   * Optional: `dockfmt`:
     ```shell

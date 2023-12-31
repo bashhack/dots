@@ -84,6 +84,13 @@ brew "d12frosted/emacs-plus/emacs-plus@29", args: ["with-imagemagick", "with-mod
 # GO-related
 brew "delve"
 
+# Lisp-related
+brew "sbcl"
+
+# C-related
+brew install "llvm"
+brew install "ccls"
+
 # Other tools
 brew "graphviz"
 brew "hugo"
