@@ -3,6 +3,7 @@ tap "homebrew/bundle"
 tap "homebrew/services"
 tap "d12frosted/emacs-plus"
 tap "epk/epk"
+tap "ankitpokhrel/jira-cli"
 
 # AWS-related
 brew "awscli"
@@ -96,3 +97,4 @@ brew "graphviz"
 brew "hugo"
 brew "shellcheck"
 brew "ffmpeg"
+brew "jira-cli"

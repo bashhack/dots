@@ -288,3 +288,25 @@ history_top() {
   # Show top 10 used commands
   history | awk '{a[$2]++}END{for(i in a){print a[i] " " i}}' | sort -rn | head; 
 }
+
+# jira-cli
+
+stdup () {
+    jira sprint list $1 --order-by status --reverse -q 'status != Done'
+}
+
+ntix () {
+    jira issue create
+}
+
+atix () {
+    jira issue assign $1 $(jira me)
+}
+
+mvtix () {
+    jira issue move $1
+}
+
+vtix () {
+    jira issue view $1
+}
