@@ -295,7 +295,7 @@ stdup () {
     jira sprint list $1 --order-by status --reverse -q 'status != Done'
 }
 
-ntix () {
+ctix () {
     jira issue create
 }
 
@@ -309,4 +309,8 @@ mvtix () {
 
 vtix () {
     jira issue view $1
+}
+
+stix () {
+    jira sprint add $1 $2
 }

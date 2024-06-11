@@ -89,8 +89,8 @@ brew "delve"
 brew "sbcl"
 
 # C-related
-brew install "llvm"
-brew install "ccls"
+brew "llvm"
+brew "ccls"
 
 # Other tools
 brew "graphviz"
