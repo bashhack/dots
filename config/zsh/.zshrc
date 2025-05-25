@@ -68,7 +68,9 @@ prompt pure
 # | COMPLETION |
 # +------------+
 
-# git add submodule git@github.com:zsh-users/zsh-completions.git plugins/zsh-completions
+# Add brew-installed zsh-completions to fpath
+fpath=(/opt/homebrew/share/zsh-completions $fpath)
+
 source $ZDOTDIR/completion.zsh
 
 # +-----+
@@ -83,8 +85,8 @@ fi
 # | SYNTAX HIGHLIGHTING |
 # +---------------------+
 
-# git add submodule git@github.com:zsh-users/zsh-syntax-highlighting.git plugins/zsh-syntax-highlighting
-source $ZDOTDIR/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# Use brew-installed zsh-syntax-highlighting
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # +----------+
 # | OrbStack |

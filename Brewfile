@@ -1,9 +1,8 @@
 # Taps
-tap "homebrew/bundle"
-tap "homebrew/services"
 tap "d12frosted/emacs-plus"
 tap "epk/epk"
 tap "ankitpokhrel/jira-cli"
+tap "bashhack/gitbak"
 
 # AWS-related
 brew "awscli"
@@ -15,6 +14,7 @@ brew "sqlite"
 brew "coreutils"
 brew "cmake"
 brew "gnupg"
+brew "pinentry-mac"
 brew "grep"
 brew "imagemagick"
 brew "openssl@3"
@@ -38,6 +38,7 @@ brew "ripgrep"
 brew "gh"
 brew "git"
 brew "git-crypt"
+brew "bashhack/gitbak/gitbak"
 
 # Docker-related
 cask "orbstack"
@@ -57,17 +58,20 @@ brew "tmux"
 brew "tmuxp"
 
 # Term-related
-cask "iterm2"
+# cask "iterm2"
 brew "libvterm"
 brew "pure"
 brew "ranger"
+brew "zsh-completions"
+brew "zsh-syntax-highlighting"
 
 # i3-lite for osx
-cask "amethyst"
+
 
 # Fonts
 brew "fontconfig"
 cask "font-sf-mono-nerd-font"
+cask "font-jetbrains-mono-nerd-font"
 
 # Node-related
 brew "fnm"
@@ -77,7 +81,6 @@ brew "pyenv"
 
 # Browsers
 cask "firefox"
-cask "orion"
 
 # Editors
 brew "d12frosted/emacs-plus/emacs-plus@29", args: ["with-imagemagick", "with-modern-doom3-icon", "with-native-comp", "with-xwidgets"]
@@ -91,6 +94,11 @@ brew "sbcl"
 # C-related
 brew "llvm"
 brew "ccls"
+brew "clang-format"
+
+# Zig-related
+brew "zig"
+brew "zls"
 
 # Other tools
 brew "graphviz"

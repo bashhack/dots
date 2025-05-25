@@ -23,7 +23,12 @@ export GOPATH=$(go env GOPATH)
 # Python
 export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+if command -v pyenv >/dev/null; then
+  eval "$(pyenv init -)"
+fi
+
+# Rust
+export PATH="$HOME/.cargo/bin:$PATH"
 
 # PATH
 export PATH="/opt/homebrew/bin:$PATH"

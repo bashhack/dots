@@ -103,7 +103,7 @@ xcode-select --install
     go get github.com/jessfraz/dockfmt
     ```
 
-- magit/forge:
+- magit/forge (see [Forge manual](https://magit.vc/manual/forge.html#Create-and-Store-an-Access-Token-1)):
   * Add Forge username to your `~/.gitconfig` for your operating system account
     ```shell
     git config --global github.user <github_username>
@@ -129,7 +129,7 @@ xcode-select --install
     godoc (for documentation lookup)
     gorename (for extra refactoring commands)
     gore (for the REPL)
-    guru (for code navigation & refactoring commands)
+    gopls (Go language server for LSP support)
     goimports (optional: for auto-formatting code on save & fixing imports)
     gotests (for generate test code)
     gomodifytags (for manipulating tags)
@@ -140,14 +140,14 @@ xcode-select --install
     go install golang.org/x/tools/cmd/godoc@latest
     go install golang.org/x/tools/cmd/goimports@latest
     go install golang.org/x/tools/cmd/gorename@latest
-    go install golang.org/x/tools/cmd/guru@latest
+    go install golang.org/x/tools/gopls@latest
     go install github.com/cweill/gotests/gotests@latest
     go install github.com/fatih/gomodifytags@latest
     ```
-  * For golangci-lint:
+  * For golangci-lint (see [installation docs](https://golangci-lint.run/welcome/install/#local-installation)):
     ```shell
     # binary will be $(go env GOPATH)/bin/golangci-lint
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.1.6
 
     golangci-lint --version
     ```
