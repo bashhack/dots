@@ -1,0 +1,22 @@
+# Example .authinfo file for storing API keys securely
+# Copy this to ~/.authinfo and replace placeholders with actual values
+# You can also encrypt it as ~/.authinfo.gpg for extra security
+
+# GitHub API tokens for different purposes
+machine api.github.com login YOUR_GITHUB_USERNAME^code-review password YOUR_GITHUB_TOKEN
+machine api.github.com login YOUR_GITHUB_USERNAME^forge password YOUR_GITHUB_TOKEN
+
+# OpenAI GPT API
+machine api.openai.com login apikey password YOUR_OPENAI_API_KEY_HERE
+
+# Anthropic Claude API  
+machine anthropic.com login apikey password YOUR_ANTHROPIC_API_KEY_HERE
+
+# Personal information (to avoid hardcoding in config files)
+machine personal.info login email password your.email@example.com
+machine personal.info login fullname password "Your Full Name"
+
+# Notes:
+# - For multi-word values like names, use quotes: "First Last"
+# - GitHub tokens can have different purposes (^code-review, ^forge)
+# - The 'login' field is used to distinguish different entries for the same host

@@ -199,3 +199,43 @@ alias gobin="$GOPATH/bin/"
 alias osx_netstat="sudo lsof -i -P"    # netstat on OSX
 
 alias frs="PL_KANGA=http://localhost:8040 PL_WORKPLACE=http://localhost:8000 PL_LOGIN=http://localhost:9000 PL_PLATFORM=http://localhost:8020 PL_USERNAME=dev PL_PASSWORD=dev123 ./foundry.py run"
+
+# +-----+
+# | PDF |
+# +-----+
+
+# PDF optimization functions using ghostscript
+pdfoptimize() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: pdfoptimize <input.pdf> [output.pdf] [quality]"
+        echo "Quality options: screen, ebook (default), printer, prepress"
+        return 1
+    fi
+    
+    local input="$1"
+    local output="${2:-${input%.pdf}_optimized.pdf}"
+    local quality="${3:-ebook}"
+    
+    gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/${quality} \
+       -dNOPAUSE -dQUIET -dBATCH -sOutputFile="${output}" "${input}"
+    
+    echo "Optimized: ${input} -> ${output} (${quality} quality)"
+    ls -lh "${input}" "${output}"
+}
+
+# Quick PDF compression aliases
+alias pdfscreen='pdfoptimize'  # Uses default ebook quality
+alias pdfsmall='() { pdfoptimize "$1" "${1%.pdf}_small.pdf" screen }'
+alias pdfprint='() { pdfoptimize "$1" "${1%.pdf}_print.pdf" printer }'
+
+# PDF info function
+pdfinfo() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: pdfinfo <file.pdf>"
+        return 1
+    fi
+    
+    echo "File: $1"
+    echo "Size: $(ls -lh "$1" | awk '{print $5}')"
+    echo "Pages: $(gs -q -dNODISPLAY -dNOSAFER -c "($1) (r) file runpdfbegin pdfpagecount = quit" 2>/dev/null || echo "Unable to count")"
+}

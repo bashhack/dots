@@ -1,0 +1,14 @@
+# Global NPM packages
+# Install with: npm install -g <package-name>
+
+# Development tools
+@anthropic-ai/claude-code    # Claude Code CLI
+@mermaid-js/mermaid-cli      # Generate diagrams from mermaid definitions
+
+# Language servers
+bash-language-server         # Bash LSP for IDE support
+pyright                      # Python type checker and language server
+
+# Code formatting and linting
+js-beautify                  # JavaScript/HTML/CSS beautifier
+stylelint                    # CSS/SCSS/Less linter

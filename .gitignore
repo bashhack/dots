@@ -1,3 +1,37 @@
 ### macOS ###
 # General
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+### Sensitive files ###
+.authinfo
+.authinfo.gpg
+*.pem
+*.key
+*-key
+*-token
+*-secret
+*-api-key
+config/doom/config-with-keys.el
+
+### Emacs ###
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Org-mode
+.org-id-locations
+*_archive
