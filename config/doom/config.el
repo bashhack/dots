@@ -74,18 +74,18 @@
   (add-to-list 'org-agenda-custom-commands
                '("W" "Work Projects"
                  ((agenda "" ((org-agenda-files (list (expand-file-name "projects/work/" org-directory)))))
-                  (tags-todo "+work+TODO=\"NEXT\""))))
+                  (tags-todo "+work+TODO=\"DOING\""))))
 
   (add-to-list 'org-agenda-custom-commands
                '("P" "Personal Projects"
                  ((agenda "" ((org-agenda-files (list (expand-file-name "projects/personal/" org-directory)))))
-                  (tags-todo "+personal+TODO=\"NEXT\""))))
+                  (tags-todo "+personal+TODO=\"DOING\""))))
 
   (add-to-list 'org-agenda-custom-commands
                '("X" "All Projects Overview"
                  ((agenda "" ((org-agenda-span 7)))
-                  (tags-todo "+project+TODO=\"NEXT\"")
-                  (tags-todo "+project+TODO=\"WAITING\"")))))
+                  (tags-todo "+project+TODO=\"DOING\"")
+                  (tags-todo "+project+TODO=\"BLOCKED\"")))))
 
 (after! org
   (defun my/create-new-project (project-name project-type)
@@ -123,18 +123,20 @@
       (re-search-forward "\\*\\* Vision & Goals" nil t)
       (forward-line 1)))
 
-  (defun my/add-dev-task ()
-    "Add a development task to current project"
+  (defun my/add-todo-task ()
+    "Add a task to project's To Do section"
     (interactive)
-    (let ((task-desc (read-string "Dev task: ")))
+    (let ((task-desc (read-string "Task: "))
+          (type (completing-read "Type: " '("TODO" "BUG" "QUICK"))))
       (goto-char (point-min))
-      (if (re-search-forward "\\*\\* Phase 1: Foundation" nil t)
+      (if (re-search-forward "\\*\\* To Do / Ready" nil t)
           (progn
             (org-end-of-subtree)
-            (insert (format "\n*** TODO %s\n    SCHEDULED: <%s>\n    :PROPERTIES:\n    :CATEGORY: dev\n    :END:"
+            (insert (format "\n*** %s %s\n    SCHEDULED: <%s>\n"
+                            type
                             task-desc
                             (format-time-string "%Y-%m-%d %a"))))
-        (message "Couldn't find development phases section"))))
+        (message "Couldn't find To Do / Ready section"))))
 
   (defun my/add-project-note ()
     "Add a quick note to current project"
@@ -152,15 +154,17 @@
   (defun my/add-project-idea ()
     "Add an idea to current project"
     (interactive)
-    (let ((idea (read-string "Idea: ")))
+    (let ((idea (read-string "Idea: "))
+          (type (completing-read "Type: " '("EXPLORE" "MAYBE" "NO"))))
       (goto-char (point-min))
-      (if (re-search-forward "\\*\\* Phase 3: Advanced Features\\|\\* Research & Notes" nil t)
+      (if (re-search-forward "\\*\\* Ideas / Backlog" nil t)
           (progn
-            (forward-line 0)
-            (insert (format "** SOMEDAY %s\n   Added: %s\n"
+            (org-end-of-subtree)
+            (insert (format "\n*** %s %s\n    Added: %s\n"
+                            type
                             idea
                             (format-time-string "[%Y-%m-%d]"))))
-        (message "Couldn't find a good place for ideas"))))
+        (message "Couldn't find Ideas / Backlog section"))))
 
   (defun my/goto-project ()
     "Quickly jump to any project"
@@ -224,20 +228,112 @@
                      (org-get-heading t t t t))))
       (message "No project clocked in")))
 
-  (defun my/add-to-ideas-inbox ()
-    "Add item to ideas inbox"
+  (defun my/add-to-capture ()
+    "Add item to capture bin"
     (interactive)
-    (let ((idea (read-string "Project idea: "))
+    (let ((idea (read-string "Capture: "))
           (type (completing-read "Type: " '("personal" "work"))))
       (find-file (expand-file-name (format "projects/%s/index.org" type) org-directory))
       (goto-char (point-min))
-      (when (re-search-forward "\\* Ideas Inbox" nil t)
+      (when (re-search-forward "\\* 📥 Capture" nil t)
         (org-end-of-subtree)
-        (insert (format "\n** TODO %s\n   [%s]\n"
+        (insert (format "\n** CAPTURE %s\n   [%s]\n"
                         idea
                         (format-time-string "%Y-%m-%d %a"))))
       (save-buffer)
-      (message "Added '%s' to %s ideas inbox" idea type)))
+      (message "Captured '%s' to %s index" idea type)))
+
+  (defun my/guided-capture ()
+    "Guided capture with templates"
+    (interactive)
+    (let* ((capture-type (completing-read "What are you capturing? "
+                                          '("Project idea"
+                                            "Bug/Issue"
+                                            "Feature request"
+                                            "Research topic"
+                                            "Quick thought"
+                                            "Question to explore")))
+           (area (completing-read "Area: " '("personal" "work")))
+           (title (read-string
+                   (pcase capture-type
+                     ("Project idea" "Project name: ")
+                     ("Bug/Issue" "Bug description: ")
+                     ("Feature request" "Feature: ")
+                     ("Research topic" "Topic: ")
+                     ("Quick thought" "Thought: ")
+                     ("Question to explore" "Question: "))))
+           (details (when (y-or-n-p "Add details? ")
+                      (read-string "Details: ")))
+           (related-project (when (y-or-n-p "Related to existing project? ")
+                              (let* ((project-files (directory-files-recursively
+                                                     (expand-file-name "projects" org-directory)
+                                                     "active.*\\.org$"))
+                                     (project-names (mapcar #'file-name-base project-files)))
+                                (completing-read "Project: " project-names)))))
+      ;; Build the capture entry
+      (find-file (expand-file-name (format "projects/%s/index.org" area) org-directory))
+      (goto-char (point-min))
+      (when (re-search-forward "\\* 📥 Capture" nil t)
+        (org-end-of-subtree)
+        (let ((type-tag (pcase capture-type
+                          ("Project idea" "PROJECT")
+                          ("Bug/Issue" "BUG")
+                          ("Feature request" "FEATURE")
+                          ("Research topic" "RESEARCH")
+                          ("Quick thought" "THOUGHT")
+                          ("Question to explore" "QUESTION"))))
+          (insert (format "\n** CAPTURE [%s] %s\n   [%s]\n"
+                          type-tag
+                          title
+                          (format-time-string "%Y-%m-%d %a")))
+          (when details
+            (insert (format "   Details: %s\n" details)))
+          (when related-project
+            (insert (format "   Related: [[file:active/%s.org][%s]]\n"
+                            related-project (upcase related-project))))))
+      (save-buffer)
+      (message "✓ Captured to %s index!" area)))
+
+  (defun my/quick-capture-menu ()
+    "Quick capture menu with common templates"
+    (interactive)
+    (let ((choice (read-char-choice
+                   (concat "Quick capture:\n"
+                           "  [i] Idea\n"
+                           "  [b] Bug\n"
+                           "  [f] Feature\n"
+                           "  [q] Question\n"
+                           "  [t] Task\n"
+                           "  [n] Note\n"
+                           "  [x] Cancel\n"
+                           "Choice: ")
+                   '(?i ?b ?f ?q ?t ?n ?x))))
+      (unless (eq choice ?x)
+        (let* ((area (completing-read "Area: " '("personal" "work")))
+               (content (read-string
+                         (pcase choice
+                           (?i "Idea: ")
+                           (?b "Bug: ")
+                           (?f "Feature: ")
+                           (?q "Question: ")
+                           (?t "Task: ")
+                           (?n "Note: ")))))
+          (find-file (expand-file-name (format "projects/%s/index.org" area) org-directory))
+          (goto-char (point-min))
+          (when (re-search-forward "\\* 📥 Capture" nil t)
+            (org-end-of-subtree)
+            (insert (format "\n** CAPTURE [%s] %s\n   [%s]\n"
+                            (pcase choice
+                              (?i "IDEA")
+                              (?b "BUG")
+                              (?f "FEATURE")
+                              (?q "QUESTION")
+                              (?t "TASK")
+                              (?n "NOTE"))
+                            content
+                            (format-time-string "%Y-%m-%d %a"))))
+          (save-buffer)
+          (message "✓ Captured!")))))
 
   (defun my/add-to-planning-queue ()
     "Add item to planning queue"
@@ -262,28 +358,546 @@
   (defun my/open-personal-index ()
     "Open personal projects index"
     (interactive)
-    (find-file (expand-file-name "projects/personal/index.org" org-directory))))
+    (find-file (expand-file-name "projects/personal/index.org" org-directory)))
 
-;; Project keybindings (need to be outside after! org block)
-(map! :leader
-      (:prefix ("n p" . "projects")
-       :desc "Create new project" "n" #'my/create-new-project
-       :desc "Add dev task" "t" #'my/add-dev-task
-       :desc "Add note" "N" #'my/add-project-note
-       :desc "Add idea" "i" #'my/add-project-idea
-       :desc "Work projects agenda" "w" (lambda () (interactive) (org-agenda nil "W"))
-       :desc "Personal projects agenda" "p" (lambda () (interactive) (org-agenda nil "P"))
-       :desc "All projects overview" "a" (lambda () (interactive) (org-agenda nil "X"))
-       :desc "Jump to project" "j" #'my/goto-project
-       :desc "Search projects" "s" #'my/search-projects
-       :desc "Link repository" "r" #'my/link-project-repo
-       :desc "Clock in" "c" #'my/clock-in-project
-       :desc "Clock out" "C" #'my/clock-out-project
-       :desc "Current project" "." #'my/current-project
-       :desc "Add to ideas inbox" "I" #'my/add-to-ideas-inbox
-       :desc "Add to planning queue" "Q" #'my/add-to-planning-queue
-       :desc "Open work index" "W" #'my/open-work-index
-       :desc "Open personal index" "P" #'my/open-personal-index))
+  (defun my/get-process-template (capture-type)
+    "Get type-specific processing template"
+    (pcase capture-type
+      ("PROJECT"
+       "\n   - Purpose: What problem does this solve?\n   - Target users: Who needs this?\n   - MVP scope: What's the smallest useful version?\n   - Estimated effort: Days/Weeks/Months?\n   - Decision: [ ] Create project  [ ] Add to existing  [ ] Reject\n   - Next: → ")
+      ("BUG"
+       "\n   - Severity: Critical/High/Medium/Low?\n   - Affected project: Which project?\n   - Root cause: What's broken?\n   - Fix approach: How to solve?\n   - Decision: [ ] Fix now  [ ] Schedule  [ ] Won't fix\n   - Next: → ")
+      ("FEATURE"
+       "\n   - Value: What benefit does this provide?\n   - Complexity: Simple/Medium/Complex?\n   - Dependencies: What's needed first?\n   - Target project: Where does this belong?\n   - Decision: [ ] Implement  [ ] Defer  [ ] Reject\n   - Next: → ")
+      ("RESEARCH"
+       "\n   - Goal: What do you want to learn?\n   - Application: How will you use this?\n   - Time needed: Hours/Days/Weeks?\n   - Resources: What do you need?\n   - Decision: [ ] Start research  [ ] Schedule  [ ] Skip\n   - Next: → ")
+      ("QUESTION"
+       "\n   - Core question: What exactly are you asking?\n   - Why important: Why does this matter?\n   - Who can help: Who has answers?\n   - Research needed: What to explore?\n   - Decision: [ ] Investigate  [ ] Ask someone  [ ] Let go\n   - Next: → ")
+      (_
+       "\n   - Purpose: Why does this matter?\n   - Context: What prompted this?\n   - Action needed: What should happen?\n   - Decision: [ ] Act on it  [ ] Delegate  [ ] Archive\n   - Next: → ")))
+
+  (defun my/quick-process-decision ()
+    "Make quick decision on current process item"
+    (interactive)
+    (when (org-at-heading-p)
+      (let* ((heading (org-get-heading t t t t))
+             (decision (completing-read
+                        (format "Decision for '%s': " heading)
+                        '("Create new project"
+                          "Add to existing project"
+                          "Schedule for later"
+                          "Need more info"
+                          "Reject - not aligned"
+                          "Reject - too complex"
+                          "Reject - already exists"))))
+        (org-end-of-subtree t nil)
+        (insert (format "\n   *** DECISION: %s [%s]\n"
+                        decision
+                        (format-time-string "%Y-%m-%d %H:%M")))
+        (when (string-prefix-p "Create new project" decision)
+          (call-interactively 'my/ready-for-action))
+        (when (string-prefix-p "Add to existing" decision)
+          (call-interactively 'my/ready-for-action))
+        (when (string-prefix-p "Reject" decision)
+          (org-todo "ARCHIVED")
+          (message "Item rejected and archived.")))))
+
+  (defun my/process-review-checklist ()
+    "Show process review checklist"
+    (interactive)
+    (with-output-to-temp-buffer "*Process Review*"
+      (princ "PROCESS REVIEW CHECKLIST\n")
+      (princ "========================\n\n")
+      (princ "For each item, ask:\n\n")
+      (princ "1. Hell Yeah or No?\n")
+      (princ "   □ Does this excite me?\n")
+      (princ "   □ Is this the best use of my time?\n")
+      (princ "   □ Will I regret NOT doing this?\n\n")
+      (princ "2. Alignment Check\n")
+      (princ "   □ Does this fit my current goals?\n")
+      (princ "   □ Does this match my values?\n")
+      (princ "   □ Is this moving me forward?\n\n")
+      (princ "3. Reality Check\n")
+      (princ "   □ Do I have time for this?\n")
+      (princ "   □ Do I have the skills or can learn?\n")
+      (princ "   □ Is this the right time?\n\n")
+      (princ "4. Decision\n")
+      (princ "   → If not \"Hell Yeah!\", it's a no\n")
+      (princ "   → Be decisive, don't leave in limbo\n")
+      (princ "   → Archive rejects for future reference\n"))
+    (message "Review each process item with this checklist"))
+
+  (defun my/project-help-menu ()
+    "Show project management command reference"
+    (interactive)
+    (with-output-to-temp-buffer "*Project Commands Help*"
+      (princ "PROJECT MANAGEMENT COMMANDS\n")
+      (princ "===========================\n\n")
+      (princ "All commands start with: SPC n p\n\n")
+
+      (princ "CAPTURE & ADD\n")
+      (princ "-------------\n")
+      (princ "  q   Quick capture menu      [i]dea [b]ug [f]eature [q]uestion [t]ask [n]ote\n")
+      (princ "  G   Guided capture          Capture with prompts for details\n")
+      (princ "  I   Basic capture           Simple text → index capture bin\n")
+      (princ "  i   Add idea                Add to current project backlog\n")
+      (princ "  t   Add todo task           Add to current project ready\n")
+      (princ "  N   Add note                Add to current project notes\n\n")
+
+      (princ "INDEX WORKFLOW (x)\n")
+      (princ "-----------------\n")
+      (princ "  x p   Process capture       Capture → Process (adds template)\n")
+      (princ "  x r   Ready for action      Process → Ready (new/existing project)\n")
+      (princ "  x x   Execute ready item    Create project or add to existing\n")
+      (princ "  x d   Quick decision        Make decision on process item\n")
+      (princ "  x c   Review checklist      Show \"Hell Yeah or No\" checklist\n")
+      (princ "  x b   Batch process         Process all captures at once\n\n")
+
+      (princ "INDEX MOVEMENT COMMANDS (x m)\n")
+      (princ "-----------------------------\n")
+      (princ "Move items between sections in index files:\n")
+      (princ "  x m c   Move to capture     Move item back to Capture section\n")
+      (princ "  x m p   Move to process     Move item to Process section\n")
+      (princ "  x m r   Move to ready       Move item to Ready for Action\n")
+      (princ "  x m a   Archive item        Archive item (ARCHIVED state)\n\n")
+
+      (princ "MOVE TASKS (m)\n")
+      (princ "--------------\n")
+      (princ "  m b   Move to backlog       → Ideas/Backlog (EXPLORE/MAYBE/NO)\n")
+      (princ "  m t   Move to todo          → To Do/Ready (TODO/BUG/QUICK)\n")
+      (princ "  m p   Move to progress      → In Progress (DOING/BLOCKED)\n")
+      (princ "  m d   Move to done          → Done (DONE)\n\n")
+
+      (princ "NAVIGATION & VIEWS\n")
+      (princ "------------------\n")
+      (princ "  j   Jump to project         Quick switch between projects\n")
+      (princ "  n   Create new project      From template\n")
+      (princ "  s   Search projects         Search all project files\n")
+      (princ "  P   Personal index          Open personal projects index\n")
+      (princ "  W   Work index              Open work projects index\n")
+      (princ "  p   Personal agenda         View personal project tasks\n")
+      (princ "  w   Work agenda             View work project tasks\n")
+      (princ "  a   All projects            Combined view\n\n")
+
+      (princ "TIME & MISC\n")
+      (princ "-----------\n")
+      (princ "  c   Clock in                Start time tracking\n")
+      (princ "  C   Clock out               Stop time tracking\n")
+      (princ "  .   Current project         Show clocked project\n")
+      (princ "  r   Link repository         Add repo URL\n")
+      (princ "  R   Weekly review           Start index review\n")
+      (princ "  Q   Planning queue          Add future project idea\n\n")
+
+      (princ "TASK STATES\n")
+      (princ "-----------\n")
+      (princ "Change state: C-c C-t (or SPC m t) then:\n")
+      (princ "  e  EXPLORE    m  MAYBE      !  NO         t  TODO\n")
+      (princ "  b  BUG        q  QUICK      g  DOING      k  BLOCKED\n")
+      (princ "  d  DONE       c  CANCELLED\n\n")
+
+      (princ "WORKFLOW: Capture → Process → Ready → Execute\n")
+      (princ "Example: npq [i] → npxp → npxr → npxx\n"))
+    (message "Project commands help displayed"))
+
+  (defun my/batch-process-captures ()
+    "Process all capture items in batch"
+    (interactive)
+    (let ((count 0))
+      (save-excursion
+        (goto-char (point-min))
+        (when (re-search-forward "^\\* 📥 Capture" nil t)
+          ;; Process items from bottom to top to avoid position issues
+          (while (re-search-forward "^\\*\\* CAPTURE" nil t)
+            (setq count (1+ count)))))
+      (if (zerop count)
+          (message "No capture items to process!")
+        (when (y-or-n-p (format "Process %d capture items? " count))
+          (dotimes (i count)
+            (goto-char (point-min))
+            (re-search-forward "^\\* 📥 Capture" nil t)
+            (when (re-search-forward "^\\*\\* CAPTURE" nil t)
+              (beginning-of-line)
+              (my/process-capture-item)))
+          (message "Batch processed %d items!" count)))))
+
+  (defun my/process-capture-item ()
+    "Move current item from Capture to Process section"
+    (interactive)
+    (when (org-at-heading-p)
+      ;; Check if we're in the Capture section
+      (let ((item-level (org-current-level))
+            (item-start (point)))
+        (save-excursion
+          (outline-up-heading 1 t)
+          (unless (looking-at "\\* 📥 Capture")
+            (error "Not in Capture section!")))
+        ;; Get the complete subtree content and extract type
+        (org-back-to-heading t)
+        (let* ((heading-start (point))
+               (heading-text (org-get-heading t t t t))
+               (capture-type (when (string-match "\\[\\([^]]+\\)\\]" heading-text)
+                               (match-string 1 heading-text)))
+               (subtree-end (save-excursion (org-end-of-subtree t t) (point)))
+               (subtree-content (buffer-substring heading-start subtree-end)))
+          ;; Replace CAPTURE with PROCESS in the content
+          (setq subtree-content
+                (replace-regexp-in-string "^\\(\\*+ \\)CAPTURE " "\\1PROCESS " subtree-content))
+          ;; Delete the original
+          (delete-region heading-start subtree-end)
+          ;; Find Process section and insert
+          (goto-char (point-min))
+          (when (re-search-forward "^\\* 🔄 Process" nil t)
+            (org-end-of-subtree t t)
+            ;; Ensure proper spacing
+            (unless (bolp) (insert "\n"))
+            (insert subtree-content)
+            ;; Add type-specific template
+            (forward-line -1)
+            (org-end-of-subtree t nil)
+            (insert (my/get-process-template capture-type))
+            (message "Moved to Process. Complete the evaluation template."))))))
+
+  (defun my/ready-for-action ()
+    "Move current item to Ready for Action"
+    (interactive)
+    (when (org-at-heading-p)
+      ;; Check if we're in Process section
+      (let ((item-level (org-current-level)))
+        (save-excursion
+          (outline-up-heading 1 t)
+          (unless (looking-at "\\* 🔄 Process")
+            (error "Not in Process section!")))
+        ;; Get item details
+        (org-back-to-heading t)
+        (let* ((heading-start (point))
+               (subtree-end (save-excursion (org-end-of-subtree t t) (point)))
+               (subtree-content (buffer-substring heading-start subtree-end))
+               (heading-text (org-get-heading t t t t))
+               (action-type (completing-read "Action type: "
+                                             '("New Project" "Add to Existing Project"))))
+          ;; Replace PROCESS with READY and adjust heading level to *** (3 stars)
+          (setq subtree-content
+                (replace-regexp-in-string "^\\*\\* PROCESS " "*** READY " subtree-content))
+          ;; Also adjust any sub-items to maintain proper hierarchy
+          (setq subtree-content
+                (replace-regexp-in-string "^\\(\\*+\\)"
+                                          (lambda (match)
+                                            (concat "*" match))
+                                          subtree-content))
+          ;; Add properties if adding to existing project
+          (when (string= action-type "Add to Existing Project")
+            (let* ((projects-dir (expand-file-name "projects" org-directory))
+                   (personal-files (directory-files
+                                    (expand-file-name "personal/active" projects-dir)
+                                    t "\\.org$"))
+                   (work-files (ignore-errors
+                                 (directory-files
+                                  (expand-file-name "work/active" projects-dir)
+                                  t "\\.org$")))
+                   (all-files (append personal-files (or work-files '())))
+                   (project-names (delq nil
+                                        (mapcar (lambda (file)
+                                                  (let ((name (file-name-base file)))
+                                                    (unless (string-match-p "index\\|template\\|README\\|HOWTO" name)
+                                                      (upcase name))))
+                                                all-files)))
+                   (project (if project-names
+                                (completing-read "Target project: " project-names)
+                              (read-string "Target project name: ")))
+                   (task-type (completing-read "Task type: "
+                                               '("EXPLORE" "TODO" "BUG" "QUICK"))))
+              ;; Add properties to content
+              (setq subtree-content
+                    (replace-regexp-in-string
+                     "^\\(\\*\\*\\* READY.*\\)\n"
+                     (format "\\1\n    :PROPERTIES:\n    :TARGET: %s\n    :TYPE: %s\n    :END:\n"
+                             project task-type)
+                     subtree-content))))
+          ;; Delete original
+          (delete-region heading-start subtree-end)
+          ;; Find target section and insert
+          (goto-char (point-min))
+          (when (re-search-forward "^\\* ✅ Ready for Action" nil t)
+            (if (string= action-type "New Project")
+                (re-search-forward "^\\*\\* Projects to Create" nil t)
+              (re-search-forward "^\\*\\* Tasks for Existing Projects" nil t))
+            (org-end-of-subtree t t)
+            (unless (bolp) (insert "\n"))
+            (insert subtree-content)
+            (message "Moved to Ready for Action!"))))))
+
+  (defun my/weekly-index-review ()
+    "Start weekly index review process"
+    (interactive)
+    (let ((type (completing-read "Review index: " '("personal" "work"))))
+      (find-file (expand-file-name (format "projects/%s/index.org" type) org-directory))
+      (goto-char (point-min))
+      (when (re-search-forward "\\*\\* Weekly Processing" nil t)
+        (org-tree-to-indirect-buffer)
+        (message "Review checklist in indirect buffer. Process items in main buffer."))))
+
+  (defun my/execute-ready-item ()
+    "Execute a READY item - create project or add to existing"
+    (interactive)
+    (if (not (org-at-heading-p))
+        (message "Not on a heading!")
+      ;; Check if we're in Ready for Action section
+      (let ((is-ready nil)
+            (item-content nil))
+        (save-excursion
+          (org-back-to-heading t)
+          (let ((heading-text (org-get-heading t t t t)))
+            (when (or (string-match "^READY " heading-text)
+                      (progn
+                        (outline-up-heading 1 t)
+                        (or (looking-at "\\*\\* Projects to Create")
+                            (looking-at "\\*\\* Tasks for Existing Projects"))))
+              (setq is-ready t))))
+        (if (not is-ready)
+            (message "Not a ready item! Must be in Ready for Action section.")
+          ;; Process the item
+          (let* ((target (org-entry-get nil "TARGET"))
+                 (task-type (org-entry-get nil "TYPE"))
+                 (heading-text (org-get-heading t t t t))
+                 ;; Clean the heading - remove READY and [TYPE] tags
+                 (clean-heading (replace-regexp-in-string
+                                 "^\\(READY \\)?\\(\\[[^]]+\\] \\)?" "" heading-text)))
+            (if target
+                ;; Add to existing project
+                (let* ((project-file (car (directory-files-recursively
+                                           (expand-file-name "projects" org-directory)
+                                           (format "%s\\.org$" (downcase target)))))
+                       (task-state (or task-type "TODO")))
+                  (if (not project-file)
+                      (message "Could not find project file for %s" target)
+                    (find-file project-file)
+                    (goto-char (point-min))
+                    (when (re-search-forward "\\*\\* Ideas / Backlog" nil t)
+                      (org-end-of-subtree)
+                      (insert (format "\n*** %s %s\n    From index: %s\n"
+                                      task-state
+                                      clean-heading
+                                      (format-time-string "[%Y-%m-%d]"))))
+                    (save-buffer)
+                    (message "Added '%s' to %s project!" clean-heading target)
+                    ;; Go back to index and mark as done
+                    (switch-to-prev-buffer)
+                    (org-todo "DONE")))
+              ;; Create new project
+              (let ((project-name (read-string "Project name: " clean-heading)))
+                (my/create-new-project project-name
+                                       (if (string-match-p "personal" (buffer-file-name))
+                                           "personal" "work"))
+                (message "Created new project: %s" project-name)
+                ;; Mark as done in index
+                (switch-to-prev-buffer)
+                (when (get-buffer (file-name-nondirectory
+                                   (expand-file-name
+                                    (format "projects/%s/index.org"
+                                            (if (string-match-p "personal" (buffer-file-name))
+                                                "personal" "work"))
+                                    org-directory)))
+                  (switch-to-buffer (file-name-nondirectory
+                                     (expand-file-name
+                                      (format "projects/%s/index.org"
+                                              (if (string-match-p "personal" (buffer-file-name))
+                                                  "personal" "work"))
+                                      org-directory)))
+                  (org-todo "DONE")))))))))
+
+  (defun my/move-task-to-progress ()
+    "Move current task to In Progress"
+    (interactive)
+    (when (org-at-heading-p)
+      (let ((new-type (completing-read "Status: " '("DOING" "BLOCKED"))))
+        (org-todo new-type)
+        (org-cut-subtree)
+        (goto-char (point-min))
+        (when (re-search-forward "\\*\\* In Progress" nil t)
+          (org-end-of-subtree)
+          (newline)
+          (org-paste-subtree 3)))))
+
+  (defun my/move-task-to-done ()
+    "Move current task to Done section"
+    (interactive)
+    (when (org-at-heading-p)
+      (org-todo "DONE")
+      (let ((content (org-get-entry)))
+        (org-cut-subtree)
+        (goto-char (point-min))
+        (when (re-search-forward "\\*\\* Done" nil t)
+          (org-end-of-subtree)
+          (newline)
+          (org-paste-subtree 3)))))
+
+  (defun my/move-task-to-todo ()
+    "Move current task to To Do section"
+    (interactive)
+    (when (org-at-heading-p)
+      (let ((new-type (completing-read "Type: " '("TODO" "BUG" "QUICK"))))
+        (org-todo new-type)
+        (org-cut-subtree)
+        (goto-char (point-min))
+        (when (re-search-forward "\\*\\* To Do / Ready" nil t)
+          (org-end-of-subtree)
+          (newline)
+          (org-paste-subtree 3)))))
+
+  (defun my/move-task-to-backlog ()
+    "Move current task to Ideas/Backlog"
+    (interactive)
+    (when (org-at-heading-p)
+      (let ((new-type (completing-read "Type: " '("EXPLORE" "MAYBE" "NO"))))
+        (org-todo new-type)
+        (org-cut-subtree)
+        (goto-char (point-min))
+        (when (re-search-forward "\\*\\* Ideas / Backlog" nil t)
+          (org-end-of-subtree)
+          (newline)
+          (org-paste-subtree 3)))))
+
+  ;; Index movement functions
+  (defun my/index-move-to-capture ()
+    "Move current item back to Capture section in index"
+    (interactive)
+    (when (org-at-heading-p)
+      (org-back-to-heading t)
+      (let* ((heading-start (point))
+             (subtree-end (save-excursion (org-end-of-subtree t t) (point)))
+             (subtree-content (buffer-substring heading-start subtree-end)))
+        ;; Convert any TODO state to CAPTURE and adjust heading level
+        (setq subtree-content
+              (replace-regexp-in-string "^\\(\\*+\\) \\(PROCESS\\|READY\\|TODO\\|DONE\\) " "** CAPTURE " subtree-content))
+        ;; Adjust sub-item levels if moving from level 3 to level 2
+        (when (string-match "^\\*\\*\\*" subtree-content)
+          (setq subtree-content
+                (replace-regexp-in-string "^\\(\\*+\\)"
+                                          (lambda (match)
+                                            (if (> (length match) 2)
+                                                (substring match 1)
+                                              match))
+                                          subtree-content)))
+        ;; Delete original
+        (delete-region heading-start subtree-end)
+        ;; Insert in Capture section
+        (goto-char (point-min))
+        (when (re-search-forward "^\\* 📥 Capture" nil t)
+          (org-end-of-subtree t t)
+          (unless (bolp) (insert "\n"))
+          (insert subtree-content)
+          (message "Moved back to Capture!")))))
+
+  (defun my/index-move-to-process ()
+    "Move current item to Process section in index"
+    (interactive)
+    (when (org-at-heading-p)
+      (org-back-to-heading t)
+      (let* ((heading-start (point))
+             (subtree-end (save-excursion (org-end-of-subtree t t) (point)))
+             (subtree-content (buffer-substring heading-start subtree-end))
+             (heading-text (org-get-heading t t t t))
+             (capture-type (when (string-match "\\[\\([^]]+\\)\\]" heading-text)
+                             (match-string 1 heading-text))))
+        ;; Convert to PROCESS and ensure level 2
+        (setq subtree-content
+              (replace-regexp-in-string "^\\(\\*+\\) \\(CAPTURE\\|READY\\|TODO\\|DONE\\) " "** PROCESS " subtree-content))
+        ;; Adjust sub-item levels to maintain hierarchy
+        (when (string-match "^\\*\\*\\*" subtree-content)
+          (setq subtree-content
+                (replace-regexp-in-string "^\\(\\*+\\)"
+                                          (lambda (match)
+                                            (if (> (length match) 2)
+                                                (substring match 1)
+                                              match))
+                                          subtree-content)))
+        ;; Delete original
+        (delete-region heading-start subtree-end)
+        ;; Insert in Process section
+        (goto-char (point-min))
+        (when (re-search-forward "^\\* 🔄 Process" nil t)
+          (org-end-of-subtree t t)
+          (unless (bolp) (insert "\n"))
+          (insert subtree-content)
+          ;; Add template if doesn't exist
+          (unless (string-match "Purpose:\\|Questions:" subtree-content)
+            (forward-line -1)
+            (org-end-of-subtree t nil)
+            (insert (my/get-process-template capture-type))))
+        (message "Moved to Process!"))))
+
+  (defun my/index-move-to-ready ()
+    "Move current item to Ready for Action in index"
+    (interactive)
+    (when (org-at-heading-p)
+      ;; Just call the existing ready-for-action function
+      (condition-case err
+          (my/ready-for-action)
+        (error
+         ;; If not in Process section, move it there first
+         (when (string-match "Not in Process section" (error-message-string err))
+           (my/index-move-to-process)
+           (my/ready-for-action))))))
+
+  (defun my/index-archive-item ()
+    "Archive current item in index"
+    (interactive)
+    (when (org-at-heading-p)
+      (org-todo "ARCHIVED")
+      (let ((content (buffer-substring (line-beginning-position)
+                                       (save-excursion (org-end-of-subtree t t) (point)))))
+        (org-cut-subtree)
+        ;; Find or create Archive section
+        (goto-char (point-max))
+        (unless (re-search-backward "^\\* Archive" nil t)
+          (goto-char (point-max))
+          (insert "\n* Archive\n"))
+        (org-end-of-subtree t t)
+        (unless (bolp) (insert "\n"))
+        (insert content)
+        (message "Item archived!"))))
+
+  ;; Project keybindings (need to be outside after! org block)
+  (map! :leader
+        (:prefix ("n p" . "projects")
+         :desc "Create new project" "n" #'my/create-new-project
+         :desc "Add todo task" "t" #'my/add-todo-task
+         :desc "Add note" "N" #'my/add-project-note
+         :desc "Add idea" "i" #'my/add-project-idea
+         :desc "Work projects agenda" "w" (lambda () (interactive) (org-agenda nil "W"))
+         :desc "Personal projects agenda" "p" (lambda () (interactive) (org-agenda nil "P"))
+         :desc "All projects overview" "a" (lambda () (interactive) (org-agenda nil "X"))
+         :desc "Jump to project" "j" #'my/goto-project
+         :desc "Search projects" "s" #'my/search-projects
+         :desc "Link repository" "r" #'my/link-project-repo
+         :desc "Clock in" "c" #'my/clock-in-project
+         :desc "Clock out" "C" #'my/clock-out-project
+         :desc "Current project" "." #'my/current-project
+         :desc "Add to capture bin" "I" #'my/add-to-capture
+         :desc "Guided capture" "G" #'my/guided-capture
+         :desc "Quick capture menu" "q" #'my/quick-capture-menu
+         :desc "Help menu" "h" #'my/project-help-menu
+         :desc "Add to planning queue" "Q" #'my/add-to-planning-queue
+         :desc "Open work index" "W" #'my/open-work-index
+         :desc "Open personal index" "P" #'my/open-personal-index
+         :desc "Weekly review" "R" #'my/weekly-index-review
+         (:prefix ("x" . "index workflow")
+          :desc "Process capture item" "p" #'my/process-capture-item
+          :desc "Mark ready for action" "r" #'my/ready-for-action
+          :desc "Execute ready item" "x" #'my/execute-ready-item
+          :desc "Quick decision" "d" #'my/quick-process-decision
+          :desc "Review checklist" "c" #'my/process-review-checklist
+          :desc "Batch process captures" "b" #'my/batch-process-captures
+          (:prefix ("m" . "move in index")
+           :desc "To capture" "c" #'my/index-move-to-capture
+           :desc "To process" "p" #'my/index-move-to-process
+           :desc "To ready" "r" #'my/index-move-to-ready
+           :desc "Archive item" "a" #'my/index-archive-item))
+         (:prefix ("m" . "move task")
+          :desc "To backlog" "b" #'my/move-task-to-backlog
+          :desc "To todo" "t" #'my/move-task-to-todo
+          :desc "To progress" "p" #'my/move-task-to-progress
+          :desc "To done" "d" #'my/move-task-to-done))))
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
@@ -462,7 +1076,7 @@
   (set-lsp-priority! 'ccls 2)) ; optional as ccls is the default in Doom
 
 
-;; Test if :type field matters
+;; Delete AFTER code merged to ELPA
 (after! dape
   ;; Find and update the existing dlv config
   (let ((dlv-config (assq 'dlv dape-configs)))
@@ -506,4 +1120,7 @@
                              :stream t
                              :key anthropic-key))
       ;; Set a Claude model as the default
-      (setq! gptel-model 'claude-3-7-sonnet-20250219))))
+      ;; (setq! gptel-model 'claude-opus-4-20250514)
+      (setq! gptel-model 'claude-sonnet-4-sonnet-20250514)
+
+      )))
