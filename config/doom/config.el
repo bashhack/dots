@@ -1124,3 +1124,192 @@
       (setq! gptel-model 'claude-sonnet-4-sonnet-20250514)
 
       )))
+
+(defvar my/sql-env-patterns
+  '(("DATABASE_URL" . "dev")
+    ("TEST_DATABASE_URL" . "test")
+    ("STAGING_DATABASE_URL" . "staging")
+    ("PROD_DATABASE_URL" . "prod")
+    ("LOCAL_DATABASE_URL" . "local")
+    ("PRIMARY_DB_DSN" . "primary"))
+  "Patterns to search for in .env files. Format: (ENV_VAR . connection-name)")
+
+(defun my/parse-database-url (url)
+  "Parse a PostgreSQL URL into connection parameters"
+  (when (string-match "postgres\\(?:ql\\)?://\\(?:\\([^:@]+\\)\\(?::\\([^@]+\\)\\)?@\\)?\\([^:/]+\\)\\(?::\\([0-9]+\\)\\)?/\\([^?]+\\)" url)
+    (list :user (match-string 1 url)
+          :password (match-string 2 url)
+          :server (or (match-string 3 url) "localhost")
+          :port (string-to-number (or (match-string 4 url) "5432"))
+          :database (match-string 5 url))))
+
+(defun my/find-project-databases ()
+  "Find all database URLs in current project's .env file"
+  (let ((env-file (expand-file-name ".env" (projectile-project-root)))
+        (connections '()))
+    (when (file-exists-p env-file)
+      (with-temp-buffer
+        (insert-file-contents env-file)
+        (dolist (pattern my/sql-env-patterns)
+          (goto-char (point-min))
+          (when (re-search-forward (format "^%s=\\(.+\\)$" (car pattern)) nil t)
+            (let* ((url (match-string 1))
+                   (params (my/parse-database-url url))
+                   (project-name (file-name-nondirectory
+                                  (directory-file-name (projectile-project-root))))
+                   (conn-name (intern (format "%s-%s" project-name (cdr pattern)))))
+              (when params
+                (push (cons conn-name params) connections)))))))
+    connections))
+
+(defun my/sql-connect-project ()
+  "Connect to a database in the current project"
+  (interactive)
+  (let* ((connections (my/find-project-databases))
+         (choices (mapcar (lambda (conn)
+                            (format "%s [%s@%s:%s/%s]"
+                                    (car conn)
+                                    (plist-get (cdr conn) :user)
+                                    (plist-get (cdr conn) :server)
+                                    (plist-get (cdr conn) :port)
+                                    (plist-get (cdr conn) :database)))
+                          connections))
+         (choice (completing-read "Connect to: " choices))
+         (conn-name (car (nth (cl-position choice choices :test #'string=) connections)))
+         (params (cdr (assoc conn-name connections))))
+    (if params
+        (let ((sql-product 'postgres)
+              (sql-user (plist-get params :user))
+              (sql-password (plist-get params :password))
+              (sql-server (plist-get params :server))
+              (sql-port (plist-get params :port))
+              (sql-database (plist-get params :database)))
+          (sql-postgres (format "*SQL: %s*" conn-name)))
+      (message "No database configuration found"))))
+
+(defun my/sql-quick-connect (env-suffix)
+  "Quickly connect to a specific environment database"
+  (let* ((connections (my/find-project-databases))
+         (project-name (file-name-nondirectory
+                        (directory-file-name (projectile-project-root))))
+         (conn-name (intern (format "%s-%s" project-name env-suffix)))
+         (params (cdr (assoc conn-name connections))))
+    (if params
+        (let ((sql-product 'postgres)
+              (sql-user (plist-get params :user))
+              (sql-password (plist-get params :password))
+              (sql-server (plist-get params :server))
+              (sql-port (plist-get params :port))
+              (sql-database (plist-get params :database)))
+          (sql-postgres (format "*SQL: %s*" conn-name)))
+      (message "No %s database found in .env" env-suffix))))
+
+;; Convenience functions for common environments
+(defun my/sql-connect-dev ()
+  "Connect to development database"
+  (interactive)
+  (my/sql-quick-connect "dev"))
+
+(defun my/sql-connect-test ()
+  "Connect to test database"
+  (interactive)
+  (my/sql-quick-connect "test"))
+
+(defun my/sql-connect-staging ()
+  "Connect to staging database"
+  (interactive)
+  (my/sql-quick-connect "staging"))
+
+;; pgcli support
+(defun my/pgcli-connect ()
+  "Connect using pgcli with selection menu"
+  (interactive)
+  (let* ((connections (my/find-project-databases))
+         (choices (mapcar (lambda (conn)
+                            (cons (format "%s [%s]"
+                                          (car conn)
+                                          (plist-get (cdr conn) :database))
+                                  conn))
+                          connections))
+         (choice (completing-read "pgcli connect to: " (mapcar #'car choices)))
+         (conn (cdr (assoc choice choices)))
+         (params (cdr conn)))
+    (when params
+      (let* ((url (format "postgres://%s:%s@%s:%s/%s"
+                          (plist-get params :user)
+                          (plist-get params :password)
+                          (plist-get params :server)
+                          (plist-get params :port)
+                          (plist-get params :database)))
+             (default-directory (projectile-project-root)))
+        (if (fboundp 'vterm)
+            (progn
+              (vterm (format "*pgcli: %s*" (car conn)))
+              (vterm-send-string (format "pgcli %s" url))
+              (vterm-send-return))
+          (async-shell-command (format "pgcli %s" url)
+                               (format "*pgcli: %s*" (car conn))))))))
+
+(defun my/database-help ()
+  "Show database connection help"
+  (interactive)
+  (with-current-buffer (get-buffer-create "*Database Help*")
+    (erase-buffer)
+    (insert "Database Connection Help\n")
+    (insert "========================\n\n")
+    (insert "Available connections in this project:\n")
+    (let ((connections (my/find-project-databases)))
+      (if connections
+          (dolist (conn connections)
+            (insert (format "  - %s: %s@%s:%s/%s\n"
+                            (car conn)
+                            (plist-get (cdr conn) :user)
+                            (plist-get (cdr conn) :server)
+                            (plist-get (cdr conn) :port)
+                            (plist-get (cdr conn) :database))))
+        (insert "  No database URLs found in .env\n")))
+    (insert "\nEnvironment variables searched:\n")
+    (dolist (pattern my/sql-env-patterns)
+      (insert (format "  - %s (→ %s connection)\n" (car pattern) (cdr pattern))))
+    (insert "\nKey bindings:\n")
+    (insert "  SPC D h - This help/hydra menu\n")
+    (insert "  SPC D c - Choose database\n")
+    (insert "  SPC D d - Dev database\n")
+    (insert "  SPC D t - Test database\n")
+    (insert "  SPC D p - pgcli\n")
+    (display-buffer (current-buffer))))
+
+;; Hydra for database operations
+(defhydra my/database-hydra (:color blue :hint nil)
+  "
+  ^Connect^             ^Tools^           ^Info^
+  ――――――――――――――――――――――――――――――――――――――――――――――
+  _d_: Dev DB          _p_: pgcli        _l_: List connections
+  _t_: Test DB         _q_: Query        _r_: Refresh connections
+  _s_: Staging DB      _m_: Migrate      _?_: Help
+  _c_: Choose DB       _b_: Backup       _Q_: Quit
+  "
+  ("d" my/sql-connect-dev)
+  ("t" my/sql-connect-test)
+  ("s" my/sql-connect-staging)
+  ("c" my/sql-connect-project)
+  ("p" my/pgcli-connect)
+  ("q" sql-send-buffer)
+  ("m" (compile "make run/postgres/migrate/up"))
+  ("b" (compile "pg_dump ..."))
+  ("l" (message "Connections: %s" (mapcar #'car (my/find-project-databases))))
+  ("r" (progn (setq sql-connection-alist nil) (message "Connections refreshed")))
+  ("?" my/database-help)
+  ("Q" nil))
+
+;; Global keybindings that work in any project
+(map! :leader
+      (:prefix ("D" . "database")
+       :desc "Database hydra" "h" #'my/database-hydra/body
+       :desc "Connect to DB" "c" #'my/sql-connect-project
+       :desc "Dev DB" "d" #'my/sql-connect-dev
+       :desc "Test DB" "t" #'my/sql-connect-test
+       :desc "pgcli" "p" #'my/pgcli-connect
+       :desc "SQL buffer" "s" #'sql-postgres))
+
+(provide 'doom-postgres-universal)
