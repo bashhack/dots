@@ -49,6 +49,9 @@
   ;; Symbol layer activation (tap for x, hold for symbol layer)
   x-sym (tap-hold $tap-time $hold-time x (layer-while-held symbols))
 
+  ;; Window layer activation (tap for e, hold for window operations)
+  e-win (tap-hold $tap-time $hold-time e (layer-while-held window))
+
   ;; Window management shortcut (tap for w, hold for Ctrl+Option)
   w-win (tap-hold $tap-time $hold-time w (multi lctrl lalt))
 
@@ -70,7 +73,7 @@
 )
 
 (deflayer base
-  esc tab q @w-win e r t y u i o p
+  esc tab q @w-win @e-win r t y u i o p
   caps @a @s @d @f g h @j @k @l @;
   lsft @z-num @x-sym c v b n m , . / rsft
   lctl lmet lalt @spc-mouse ralt rmet rctl ret
@@ -107,5 +110,15 @@
   _    _    _    _    _    _    _    _    [    ]    S-9  S-0
   _    _    _    _    _    _    _    S-[  S-]  =    _
   _    _    _    _    _    _    _    -    S--  S-=  _    _
+  _    _    _    _    _    _    _    _
+)
+
+;; Window Layer (Hold E)
+;;   R = Hide current app (Cmd+H)
+;;   T = Hide other apps (Cmd+Option+H)
+(deflayer window
+  _    _    _    _    _    M-h  M-A-h _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _    _    _    _    _
 )
