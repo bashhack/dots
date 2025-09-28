@@ -1,0 +1,111 @@
+;; Kanata Configuration for Kinesis Advantage
+;; Features:
+;;   - Home row mods (ASDF/JKL; as Ctrl/Alt/Meta/Shift)
+;;   - Hold Space for mouse layer
+;;   - Hold Z for number layer (right hand numpad)
+;;   - Hold X for symbol layer (right hand brackets/symbols)
+;;
+;; Quick Reference:
+;;   Space = tap for space, hold for mouse control
+;;   Z     = tap for z, hold for numbers
+;;   X     = tap for x, hold for symbols
+;;   ASDF  = tap for letters, hold for left modifiers
+;;   JKL;  = tap for letters, hold for right modifiers
+
+(defcfg
+  process-unmapped-keys yes
+)
+
+(defsrc
+  esc tab q w e r t y u i o p
+  caps a s d f g h j k l ;
+  lsft z x c v b n m , . / rsft
+  lctl lmet lalt spc ralt rmet rctl ret
+)
+
+(defvar
+  tap-time 150
+  hold-time 200
+)
+
+(defalias
+  ;; Home row mods
+  a (tap-hold $tap-time $hold-time a lctrl)
+  s (tap-hold $tap-time $hold-time s lalt)
+  d (tap-hold $tap-time $hold-time d lmet)
+  f (tap-hold $tap-time $hold-time f lsft)
+
+  j (tap-hold $tap-time $hold-time j rsft)
+  k (tap-hold $tap-time $hold-time k rmet)
+  l (tap-hold $tap-time $hold-time l ralt)
+  ; (tap-hold $tap-time $hold-time ; rctrl)
+
+  ;; Mouse layer activation (tap for space, hold for mouse layer)
+  spc-mouse (tap-hold $tap-time $hold-time spc (layer-while-held mouse))
+
+  ;; Number layer activation (tap for z, hold for number layer)
+  z-num (tap-hold $tap-time $hold-time z (layer-while-held numbers))
+
+  ;; Symbol layer activation (tap for x, hold for symbol layer)
+  x-sym (tap-hold $tap-time $hold-time x (layer-while-held symbols))
+
+  ;; Window management shortcut (tap for w, hold for Ctrl+Option)
+  w-win (tap-hold $tap-time $hold-time w (multi lctrl lalt))
+
+  ;; Speed modifiers
+  ms-slow (movemouse-speed 25)
+  ms-fast (movemouse-speed 200)
+
+  ;; Scroll aliases
+  mwu (mwheel-up 50 120)
+  mwd (mwheel-down 50 120)
+  mwl (mwheel-left 50 120)
+  mwr (mwheel-right 50 120)
+
+  ;; Mouse movement (4ms interval, 4px distance)
+  ms↑ (movemouse-up 4 4)
+  ms← (movemouse-left 4 4)
+  ms↓ (movemouse-down 4 4)
+  ms→ (movemouse-right 4 4)
+)
+
+(deflayer base
+  esc tab q @w-win e r t y u i o p
+  caps @a @s @d @f g h @j @k @l @;
+  lsft @z-num @x-sym c v b n m , . / rsft
+  lctl lmet lalt @spc-mouse ralt rmet rctl ret
+)
+
+;; Mouse Layer (Hold Space)
+;; W=slow, E=fast speed modifiers
+;; HJKL=movement, SDF=buttons, YUIO=scroll
+(deflayer mouse
+  _    _    _    @ms-slow @ms-fast _    _    @mwl @mwu @mwd @mwr _
+  _    _    mrgt mmid mlft _    @ms← @ms↓ @ms↑ @ms→ _
+  _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _
+)
+
+;; Number Layer (Hold Z)
+;; Right hand becomes numpad:
+;;   U I O P → 7 8 9 0
+;;   J K L   → 4 5 6
+;;   M , .   → 1 2 3
+(deflayer numbers
+  _    _    _    _    _    _    _    _    7    8    9    0
+  _    _    _    _    _    _    _    4    5    6    _
+  _    _    _    _    _    _    _    1    2    3    _    _
+  _    _    _    _    _    _    _    _
+)
+
+;; Symbol Layer (Hold X)
+;; Right hand becomes symbols:
+;;   U I O P → [ ] ( )
+;;   J K L   → { } =
+;;   M , .   → - _ +
+(deflayer symbols
+  _    _    _    _    _    _    _    _    [    ]    S-9  S-0
+  _    _    _    _    _    _    _    S-[  S-]  =    _
+  _    _    _    _    _    _    _    -    S--  S-=  _    _
+  _    _    _    _    _    _    _    _
+)
