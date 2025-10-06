@@ -31,8 +31,9 @@
 ;; See 'C-h v doom-font' for documentation and more examples of what they
 ;; accept. For example:
 ;;
-(setq doom-font (font-spec :family "JetBrains Mono" :size 12 :weight 'semi-light)
-      doom-variable-pitch-font (font-spec :family "JetBrains Mono" :size 13))
+(setq doom-font (font-spec :family "TX-02" :size 12 :weight 'regular)
+      doom-variable-pitch-font (font-spec :family "TX-02" :size 12)
+      doom-big-font (font-spec :family "TX-02" :size 20 :weight 'regular))
 ;;
 ;; If you or Emacs can't find your font, use 'M-x describe-font' to look them
 ;; up, `M-x eval-region' to execute elisp code, and 'M-x doom/reload-font' to
@@ -42,7 +43,12 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-gruvbox)
+
+;; (setq doom-theme 'doom-meltbus)
+;; (setq doom-theme 'modus-vivendi)
+;; (setq doom-theme 'doom-gruvbox)
+;; (setq doom-theme 'doom-sourcerer)
+(setq doom-theme 'doom-one)
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
@@ -932,6 +938,8 @@
 ;; they are implemented.
 
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
+(add-to-list 'default-frame-alist '(fullscreen . maximized)) ;; ensure all frames start maximized, including in daemon mode
+(add-to-list 'default-frame-alist '(background-color . "#282828"))
 
 (map! :leader
       :desc "FuZzily find File in home"
@@ -942,10 +950,11 @@
       "f z d" (cmd!! #'affe-find))
 
 ;; DOOM!!!
-(setq fancy-splash-image "/Users/marcalvarez/Pictures/doom-emacs-color2.png")
+(setq fancy-splash-image "/Users/marcalvarez/.config/doom/splash/doom-emacs-color2.png")
 
 ;; Just a little transparency
-(set-frame-parameter (selected-frame) 'alpha '(90 . 90)) (add-to-list 'default-frame-alist '(alpha . (90 . 90)))
+(set-frame-parameter (selected-frame) 'alpha '(98 . 98))
+(add-to-list 'default-frame-alist '(alpha . (98 . 98)))
 
 (setq auth-sources '("~/.authinfo"))
 ;; (setq auth-sources '("~/.authinfo.gpg"))
@@ -1056,10 +1065,11 @@
 (setq delete-by-moving-to-trash t
       trash-directory "~/.Trash/")
 
-;; Common Lisp - Quicklisp
-;; NOTE: Using Sly instead of SLIME, so commenting out slime-helper
-;; (load (expand-file-name "~/.quicklisp/slime-helper.el"))
-(setq inferior-lisp-program "sbcl")
+;; Common Lisp - Quicklisp (lazy-load only when opening Lisp files)
+(after! sly
+  (when (file-exists-p (expand-file-name "~/.quicklisp/slime-helper.el"))
+    (load (expand-file-name "~/.quicklisp/slime-helper.el"))
+    (setq inferior-lisp-program "sbcl")))
 
 ;; C/C++
 ;; (after! lsp-clangd
@@ -1313,3 +1323,13 @@
        :desc "SQL buffer" "s" #'sql-postgres))
 
 (provide 'doom-postgres-universal)
+
+;; Port over scroll zoom from Goland
+(map!
+ "C-<wheel-up>"   #'text-scale-increase
+ "C-<wheel-down>" #'text-scale-decrease
+ "s-<wheel-up>"   #'text-scale-increase
+ "s-<wheel-down>" #'text-scale-decrease)
+
+;; Add web-mode for .gohtml files
+(add-to-list 'auto-mode-alist '("\\.gohtml\\'" . web-mode))

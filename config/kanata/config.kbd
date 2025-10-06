@@ -81,7 +81,7 @@
 
 ;; Mouse Layer (Hold Space)
 ;; W=slow, E=fast speed modifiers
-;; HJKL=movement, SDF=buttons, YUIO=scroll
+;; HJKL=movement, SDF=buttons, YUIO=rcroll
 (deflayer mouse
   _    _    _    @ms-slow @ms-fast _    _    @mwl @mwu @mwd @mwr _
   _    _    mrgt mmid mlft _    @ms← @ms↓ @ms↑ @ms→ _
