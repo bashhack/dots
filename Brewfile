@@ -67,9 +67,7 @@ brew "zsh-completions"
 brew "zsh-syntax-highlighting"
 brew "kanata"
 cask "karabiner-elements"
-
-# i3-lite for osx
-
+cask "ghostty"
 
 # Fonts
 brew "fontconfig"
