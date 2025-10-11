@@ -1106,34 +1106,34 @@
                 :program ".")))))
 
 ;; GPTel
-(use-package! gptel
-  :config
-  ;; Function to get API key from auth-sources
-  (defun my/get-api-key (host)
-    "Get API key for HOST from auth-sources."
-    (let ((auth (car (auth-source-search :host host :user "apikey" :max 1))))
-      (if (and auth (plist-get auth :secret))
-          (funcall (plist-get auth :secret))
-        nil)))
-  
-  ;; Set up GPTel with OpenAI
-  (let ((openai-key (my/get-api-key "api.openai.com")))
-    (setq! gptel-api-key (or openai-key "your-api-key")))
-  
-  (setq! gptel-org-convert-response t)
-  (setq! gptel-response-separator "\n\n")
-  
-  ;; Create the Claude backend using API key from auth-sources
-  (let ((anthropic-key (my/get-api-key "anthropic.com")))
-    (when anthropic-key
-      (setq! gptel-backend (gptel-make-anthropic "Claude"
-                             :stream t
-                             :key anthropic-key))
-      ;; Set a Claude model as the default
-      ;; (setq! gptel-model 'claude-opus-4-20250514)
-      (setq! gptel-model 'claude-sonnet-4-sonnet-20250514)
+;; (use-package! gptel
+;;   :config
+;;   ;; Function to get API key from auth-sources
+;;   (defun my/get-api-key (host)
+;;     "Get API key for HOST from auth-sources."
+;;     (let ((auth (car (auth-source-search :host host :user "apikey" :max 1))))
+;;       (if (and auth (plist-get auth :secret))
+;;           (funcall (plist-get auth :secret))
+;;         nil)))
 
-      )))
+;;   ;; Set up GPTel with OpenAI
+;;   (let ((openai-key (my/get-api-key "api.openai.com")))
+;;     (setq! gptel-api-key (or openai-key "your-api-key")))
+
+;;   (setq! gptel-org-convert-response t)
+;;   (setq! gptel-response-separator "\n\n")
+
+;;   ;; Create the Claude backend using API key from auth-sources
+;;   (let ((anthropic-key (my/get-api-key "anthropic.com")))
+;;     (when anthropic-key
+;;       (setq! gptel-backend (gptel-make-anthropic "Claude"
+;;                              :stream t
+;;                              :key anthropic-key))
+;;       ;; Set a Claude model as the default
+;;       ;; (setq! gptel-model 'claude-opus-4-20250514)
+;;       (setq! gptel-model 'claude-sonnet-4-sonnet-20250514)
+
+;;       )))
 
 (defvar my/sql-env-patterns
   '(("DATABASE_URL" . "dev")
@@ -1333,3 +1333,18 @@
 
 ;; Add web-mode for .gohtml files
 (add-to-list 'auto-mode-alist '("\\.gohtml\\'" . web-mode))
+
+(use-package! claude-code-ide
+  :config
+  (claude-code-ide-emacs-tools-setup) ; Enable Emacs MCP tools
+
+  ;; Leader key bindings for claude-code-ide under SPC a (AI/Assistant)
+  (map! :leader
+        (:prefix ("a" . "ai/assistant")
+         :desc "Claude menu" "a" #'claude-code-ide-menu
+         :desc "Start Claude" "s" #'claude-code-ide
+         :desc "Resume Claude" "r" #'claude-code-ide-resume
+         :desc "Clear chat" "x" #'claude-code-ide-clear))
+
+  ;; Visual mode binding for sending selections to Claude
+  (map! :v "SPC a i" #'claude-code-ide-insert-at-mentioned))
