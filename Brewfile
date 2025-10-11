@@ -84,8 +84,12 @@ brew "pyenv"
 cask "firefox"
 
 # Editors
+<<<<<<< Updated upstream
 brew "d12frosted/emacs-plus/emacs-plus@29", args: ["with-imagemagick", "with-modern-doom3-icon", "with-native-comp", "with-xwidgets"]
 brew "neovim"
+=======
+brew "d12frosted/emacs-plus/emacs-plus@30", args: ["with-imagemagick", "with-modern-doom3-icon", "with-xwidgets"]
+>>>>>>> Stashed changes
 
 # GO-related
 brew "delve"
