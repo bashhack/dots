@@ -18,6 +18,11 @@ alias r='source $ZDOTDIR/.zshrc'
 alias d='dirs -v'
 for index ({1..9}) alias "$index"="cd +${index} > /dev/null"; unset index # directory stack
 
+# Alias management
+alias aliases='cat $ZDOTDIR/aliases | command grep -E "^alias|^# \+|^[a-z]+\(\)" | bat --style=plain --language=bash'
+alias aliasgrep='() { cat $ZDOTDIR/aliases | command grep -i "$1" -A 2 -B 1 }'
+alias aliasfzf='alias | fzf --preview "echo {}" --preview-window=up:3:wrap --height 40%'
+
 # +------------+
 # | Navigation |
 # +------------+
@@ -152,6 +157,76 @@ alias dif="git diff --no-index"                                                 
 alias tmuxk='tmux kill-session -t'
 alias tmuxa='tmux attach -t'
 alias tmuxl='tmux list-sessions'
+alias tmuxhelp='cat << "EOF"
+╔══════════════════════════════════════════════════════════════╗
+║                    TMUX CHEATSHEET                           ║
+║              Custom config: ~/.tmux.conf                     ║
+╚══════════════════════════════════════════════════════════════╝
+
+┌─ PREFIX ─────────────────────────────────────────────────────┐
+│ Ctrl+a                    Your custom prefix (not Ctrl+b)    │
+└──────────────────────────────────────────────────────────────┘
+
+┌─ SESSIONS ───────────────────────────────────────────────────┐
+│ tmux                      Start new session                  │
+│ tmux new -s <name>        Start new named session            │
+│ tmuxa <name>              Attach to session (alias)          │
+│ tmuxl                     List sessions (alias)              │
+│ tmuxk <name>              Kill session (alias)               │
+│ <prefix> d                Detach from session                │
+│ <prefix> $                Rename session                     │
+└──────────────────────────────────────────────────────────────┘
+
+┌─ WINDOWS ────────────────────────────────────────────────────┐
+│ <prefix> c                Create new window                  │
+│ <prefix> ,                Rename window                      │
+│ <prefix> w                List windows                       │
+│ <prefix> n                Next window                        │
+│ <prefix> p                Previous window                    │
+│ <prefix> &                Kill window                        │
+│ <prefix> 0-9              Switch to window by number         │
+└──────────────────────────────────────────────────────────────┘
+
+┌─ PANES (CUSTOM) ─────────────────────────────────────────────┐
+│ <prefix> |                Split vertically                   │
+│ <prefix> -                Split horizontally                 │
+│ <prefix> x                Kill pane                          │
+│ <prefix> z                Toggle pane zoom                   │
+│ <prefix> m                Maximize pane toggle               │
+│ <prefix> h                Resize pane left                   │
+│ <prefix> j                Resize pane down                   │
+│ <prefix> k                Resize pane up                     │
+│ <prefix> l                Resize pane right                  │
+│ Ctrl+h/j/k/l              Navigate panes (vim-tmux-navigator)│
+└──────────────────────────────────────────────────────────────┘
+
+┌─ COPY MODE (VI) ─────────────────────────────────────────────┐
+│ <prefix> [                Enter copy mode                    │
+│ Space                     Start selection                    │
+│ v                         Begin selection (in copy mode)     │
+│ y                         Toggle rectangle mode              │
+│ Enter                     Copy selection (to clipboard)      │
+│ <prefix> P                Paste from buffer                  │
+│ q                         Exit copy mode                     │
+└──────────────────────────────────────────────────────────────┘
+
+┌─ MISC ───────────────────────────────────────────────────────┐
+│ <prefix> r                Reload tmux config                 │
+│ <prefix> ?                Show all keybindings               │
+│ <prefix> t                Show time                          │
+│ <prefix> :                Command prompt                     │
+└──────────────────────────────────────────────────────────────┘
+
+┌─ PLUGINS ────────────────────────────────────────────────────┐
+│ vim-tmux-navigator        Seamless vim/tmux navigation       │
+│ tmux-resurrect            Persist sessions after restart     │
+│ tmux-continuum            Auto-save sessions every 15min     │
+│ tmux-gruvbox              Gruvbox dark theme                 │
+└──────────────────────────────────────────────────────────────┘
+
+Tip: Mouse support is enabled - you can click to switch panes!
+EOF
+'
 
 # +-------+
 # | tmuxp |
@@ -169,6 +244,7 @@ alias dockimg='docker images'                                                   
 alias dockprune='docker system prune -a --volumes'                              # prune everything
 alias dockceu='docker-compose run --rm -u $(id -u):$(id -g)'                    # run as the host user
 alias dockce='docker-compose run --rm'
+alias docker-cleanup='docker buildx prune -af && docker image prune -af && echo "Docker cleaned!"'  # clean build cache and dangling images
 
 # +----------------+
 # | docker-compose |

@@ -13,6 +13,8 @@
 (package! peep-dired)
 (package! glab)  ;; GitLab API integration needed by forge/code-review
 (package! sly)
+(package! ef-themes)
+(package! doric-themes)
 
 (package! claude-code-ide
   :recipe (:host github :repo "manzaltu/claude-code-ide.el"))
