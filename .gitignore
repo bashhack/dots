@@ -35,3 +35,7 @@ tramp
 # Org-mode
 .org-id-locations
 *_archive
+
+### Fish ###
+# Fish universal variables (machine-specific state)
+config/fish/fish_variables

@@ -23,6 +23,59 @@ alias aliases='cat $ZDOTDIR/aliases | command grep -E "^alias|^# \+|^[a-z]+\(\)"
 alias aliasgrep='() { cat $ZDOTDIR/aliases | command grep -i "$1" -A 2 -B 1 }'
 alias aliasfzf='alias | fzf --preview "echo {}" --preview-window=up:3:wrap --height 40%'
 
+# Shell switching
+switchfish() {
+    local fish_path=$(command -v fish)
+
+    if [[ -z "$fish_path" ]]; then
+        echo "❌ fish not found! Install with: brew install fish"
+        return 1
+    fi
+
+    # Check if fish is in /etc/shells
+    if ! grep -q "^${fish_path}$" /etc/shells; then
+        echo "⚠️  fish is not in /etc/shells yet"
+        echo "   Adding it now (requires sudo)..."
+        echo ""
+        echo "$fish_path" | sudo tee -a /etc/shells > /dev/null
+
+        if [[ $? -ne 0 ]]; then
+            echo "❌ Failed to add fish to /etc/shells"
+            return 1
+        fi
+        echo "✅ Added fish to /etc/shells"
+        echo ""
+    fi
+
+    echo "🔄 Switching default shell to fish..."
+    echo "   Path: $fish_path"
+    echo ""
+    echo "⚠️  You may be prompted for your password again"
+
+    chsh -s "$fish_path"
+
+    if [[ $? -eq 0 ]]; then
+        echo "✅ Default shell changed to fish"
+        echo "   Restart your terminal or open a new window to use fish"
+        echo ""
+        echo "💡 To switch back to zsh, run: switchzsh"
+    else
+        echo "❌ Failed to change shell"
+        return 1
+    fi
+}
+
+# Try fish in tmux session (safe way to experiment)
+tryfish() {
+    if ! command -v fish &>/dev/null; then
+        echo "❌ fish not found! Install with: brew install fish"
+        return 1
+    fi
+
+    echo "🐟 Starting new tmux session with fish..."
+    tmux new-session -s fish-trial fish
+}
+
 # +------------+
 # | Navigation |
 # +------------+
@@ -112,11 +165,36 @@ alias hugostart="hugo server -DEF --ignoreCache"
 # +-------+
 
 alias -s org=emacs
-alias em="emacsclient -c -a ''"
-alias emt="emacsclient -t -a ''"
-alias vim='em'
-alias vi='em'
-alias killem="emacsclient -e '(save-buffers-kill-emacs)'"
+em() {
+    emacsclient -s doom -c "$@" 2>/dev/null || (emacs --init-directory=~/.config/emacs --daemon=doom && emacsclient -s doom -c "$@")
+}
+emt() {
+    emacsclient -s doom -t "$@" 2>/dev/null || (emacs --init-directory=~/.config/emacs --daemon=doom && emacsclient -s doom -t "$@")
+}
+alias ec='emacsclient -s doom -c -n'                        # Quick new frame
+alias killem='emacsclient -s doom -e "(kill-emacs)"'        # Force kill daemon (no prompts)
+checkemacs() {
+    echo "Checking Emacs daemon status..."
+    if ps aux | grep -E "emacs.*daemon" | grep -v grep > /dev/null; then
+        echo "✓ Daemon(s) running:"
+        ps aux | grep -E "emacs.*daemon" | grep -v grep | awk '{print "  PID " $2 ": " $11 " " $12 " " $13}'
+        echo ""
+        echo "Try: ec (to open new frame)"
+    else
+        echo "✗ No daemon running"
+        echo "Run: em (to start daemon and open frame)"
+    fi
+}
+restartem() {
+    echo "Killing Emacs daemon..."
+    emacsclient -s doom -e "(kill-emacs)" 2>/dev/null || killall Emacs
+    sleep 1
+    echo "Starting fresh daemon..."
+    emacs --init-directory=~/.config/emacs --daemon=doom
+    echo "Done! Use 'ec' or 'em' to open a new frame"
+}
+alias vim='nvim'
+alias vi='nvim'
 
 
 # +-----+
