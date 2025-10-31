@@ -4,9 +4,6 @@
 # | System |
 # +--------+
 
-alias restart='sudo shutdown -r now'
-alias shutdown='sudo shutdown -h now'
-alias sleep='sudo shutdown -s now'
 alias c='clear'
 alias h='history'
 alias r='source $ZDOTDIR/.zshrc'

@@ -1332,6 +1332,18 @@
  "s-<wheel-up>"   #'text-scale-increase
  "s-<wheel-down>" #'text-scale-decrease)
 
+;; Keyboard zoom bindings
+(map! :leader
+      :desc "Zoom in" "z +" #'text-scale-increase
+      :desc "Zoom out" "z -" #'text-scale-decrease
+      :desc "Reset zoom" "z 0" #'doom/reset-font-size)
+
+;; Alternative: use in normal/visual/insert modes with Ctrl
+(map! :nvi "C-=" #'text-scale-increase
+      :nvi "C-+" #'text-scale-increase
+      :nvi "C--" #'text-scale-decrease
+      :nvi "C-0" #'doom/reset-font-size)
+
 ;; Add web-mode for .gohtml files
 (add-to-list 'auto-mode-alist '("\\.gohtml\\'" . web-mode))
 
